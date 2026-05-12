@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Shopee Từ Hảo — Tháng 4/2026</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#0f172a; --panel:#1e293b; --panel2:#334155; --border:#334155;
+    --text:#e2e8f0; --muted:#94a3b8;
+    --brand:#f97316; --brand2:#fb923c;
+    --good:#22c55e; --warn:#eab308; --bad:#ef4444; --info:#3b82f6;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:'Segoe UI','Inter',system-ui,Arial,sans-serif}
+  body{padding:24px;line-height:1.5}
+  .container{max-width:1500px;margin:0 auto}
+  header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px}
+  .title{font-size:24px;font-weight:700}
+  .subtitle{color:var(--muted);font-size:13px;margin-top:4px}
+  .badge{background:var(--brand);color:#fff;padding:6px 12px;border-radius:6px;font-size:12px;font-weight:600}
+  .tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:20px;overflow-x:auto;flex-wrap:wrap}
+  .tab{padding:10px 16px;cursor:pointer;font-size:14px;color:var(--muted);border-bottom:2px solid transparent;white-space:nowrap;font-weight:500}
+  .tab:hover{color:var(--text)}
+  .tab.active{color:var(--brand);border-bottom-color:var(--brand);font-weight:600}
+  .page{display:none}
+  .page.active{display:block}
+  .grid{display:grid;gap:14px}
+  .g4{grid-template-columns:repeat(4,1fr)}
+  .g3{grid-template-columns:repeat(3,1fr)}
+  .g2{grid-template-columns:repeat(2,1fr)}
+  @media (max-width:900px){.g4,.g3,.g2{grid-template-columns:1fr 1fr}}
+  @media (max-width:600px){.g4,.g3,.g2{grid-template-columns:1fr}}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:16px}
+  .kpi{background:linear-gradient(135deg,var(--panel) 0%,var(--panel2) 100%);border:1px solid var(--border);border-radius:10px;padding:16px;position:relative;overflow:hidden}
+  .kpi .label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+  .kpi .value{font-size:22px;font-weight:700;color:var(--text)}
+  .kpi .sub{font-size:11px;color:var(--muted);margin-top:4px}
+  .kpi.brand{border-left:4px solid var(--brand)}
+  .kpi.good{border-left:4px solid var(--good)}
+  .kpi.warn{border-left:4px solid var(--warn)}
+  .kpi.bad{border-left:4px solid var(--bad)}
+  .kpi.info{border-left:4px solid var(--info)}
+  .chart-card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:16px}
+  .chart-card h3{margin:0 0 12px 0;font-size:15px;font-weight:600}
+  .chart-wrap{position:relative;height:300px}
+  .chart-wrap.tall{height:380px}
+  .chart-wrap.short{height:240px}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{background:var(--panel2);color:var(--text);padding:10px 8px;text-align:left;font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.3px;border-bottom:1px solid var(--border)}
+  td{padding:9px 8px;border-bottom:1px solid var(--border);color:var(--text)}
+  tr:hover td{background:rgba(255,255,255,.03)}
+  .right{text-align:right}
+  .center{text-align:center}
+  .pill{display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:600}
+  .pill.good{background:rgba(34,197,94,.15);color:#86efac}
+  .pill.warn{background:rgba(234,179,8,.15);color:#fde047}
+  .pill.bad{background:rgba(239,68,68,.15);color:#fca5a5}
+  .pill.info{background:rgba(59,130,246,.15);color:#93c5fd}
+  .insight{background:rgba(249,115,22,.08);border-left:3px solid var(--brand);padding:12px 16px;border-radius:0 8px 8px 0;margin:8px 0;font-size:13px}
+  .insight.bad{background:rgba(239,68,68,.08);border-left-color:var(--bad)}
+  .insight.good{background:rgba(34,197,94,.08);border-left-color:var(--good)}
+  .insight.warn{background:rgba(234,179,8,.08);border-left-color:var(--warn)}
+  .insight strong{color:var(--text)}
+  h2{font-size:18px;margin:24px 0 12px 0}
+  .note{font-size:12px;color:var(--muted);margin-top:6px;font-style:italic}
+  .row-flex{display:flex;gap:14px;flex-wrap:wrap}
+  .footer{margin-top:32px;padding-top:16px;border-top:1px solid var(--border);text-align:center;color:var(--muted);font-size:12px}
+  .decision-card{background:linear-gradient(135deg,#1e293b,#334155);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:14px}
+  .decision-card .priority{display:inline-block;padding:3px 10px;border-radius:4px;font-size:11px;font-weight:700;text-transform:uppercase;margin-bottom:8px}
+  .priority.p1{background:var(--bad);color:#fff}
+  .priority.p2{background:var(--warn);color:#000}
+  .priority.p3{background:var(--info);color:#fff}
+  .decision-card h4{margin:0 0 8px 0;font-size:15px}
+  .decision-card .body{font-size:13px;color:#cbd5e1}
+  .table-wrap{overflow-x:auto}
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <div>
+      <div class="title">📊 Dashboard Shopee Từ Hảo</div>
+      <div class="subtitle">Báo cáo bán hàng — Tháng 4/2026 (01/04 → 29/04, 29 ngày) • DT = tổng đơn (không trừ trợ giá Shopee, all đơn)</div>
+    </div>
+    <div class="badge">SHOPEE • THÁNG 4/2026</div>
+  </header>
+
+  <div class="tabs">
+    <div class="tab active" data-page="overview">📈 Tổng quan</div>
+    <div class="tab" data-page="cost">💰 Chi phí</div>
+    <div class="tab" data-page="sku">🛍️ Theo SKU</div>
+    <div class="tab" data-page="cogs">📦 Giá vốn & LN gộp</div>
+    <div class="tab" data-page="profit">💹 Profit / SKU</div>
+    <div class="tab" data-page="ads">🎯 ADS</div>
+    <div class="tab" data-page="trend">📉 Trend & Cảnh báo</div>
+    <div class="tab" data-page="decision">⚡ Quyết định</div>
+  </div>
+
+  <!-- ============ TỔNG QUAN ============ -->
+  <div class="page active" id="overview">
+    <div class="grid g4" style="margin-bottom:14px">
+      <div class="kpi brand"><div class="label">Doanh thu (all đơn)</div><div class="value" id="kpi-dt"></div><div class="sub" id="kpi-dt-sub"></div></div>
+      <div class="kpi info"><div class="label">DT đơn hoàn thành</div><div class="value" id="kpi-dt-ok"></div><div class="sub" id="kpi-dt-ok-sub"></div></div>
+      <div class="kpi good"><div class="label">LN sau giá vốn</div><div class="value" id="kpi-ln-sau"></div><div class="sub" id="kpi-margin"></div></div>
+      <div class="kpi info"><div class="label">LN trước giá vốn</div><div class="value" id="kpi-ln-truoc"></div><div class="sub">(DT - toàn bộ phí)</div></div>
+    </div>
+    <div class="grid g4" style="margin-bottom:14px">
+      <div class="kpi info"><div class="label">AOV</div><div class="value" id="kpi-aov"></div><div class="sub">Trên đơn hoàn thành</div></div>
+      <div class="kpi"><div class="label">Tổng đơn</div><div class="value" id="kpi-orders"></div><div class="sub" id="kpi-orders-sub"></div></div>
+      <div class="kpi"><div class="label">SP đã bán</div><div class="value" id="kpi-qty"></div><div class="sub" id="kpi-qty-sub"></div></div>
+      <div class="kpi bad"><div class="label">Đơn hủy</div><div class="value" id="kpi-cancel"></div><div class="sub" id="kpi-cancel-rate"></div></div>
+    </div>
+    <div class="grid g4" style="margin-bottom:18px">
+      <div class="kpi warn"><div class="label">Giá trị đơn hủy</div><div class="value" id="kpi-dt-cancel"></div><div class="sub" id="kpi-dt-cancel-sub"></div></div>
+      <div class="kpi warn"><div class="label">Tổng giá vốn (đơn HT)</div><div class="value" id="kpi-cogs"></div><div class="sub" id="kpi-cogs-sub"></div></div>
+      <div class="kpi warn"><div class="label">Chi phí ADS</div><div class="value" id="kpi-ads"></div><div class="sub" id="kpi-ads-sub"></div></div>
+      <div class="kpi"><div class="label">ROAS toàn shop</div><div class="value" id="kpi-roas"></div><div class="sub">DT / Chi phí ads</div></div>
+    </div>
+
+    <div class="grid g2" style="margin-bottom:14px">
+      <div class="chart-card"><h3>Doanh thu & Lợi nhuận sau GV theo ngày</h3><div class="chart-wrap"><canvas id="ch-rev-day"></canvas></div></div>
+      <div class="chart-card"><h3>Số đơn hoàn thành vs Đơn hủy theo ngày</h3><div class="chart-wrap"><canvas id="ch-orders-day"></canvas></div></div>
+    </div>
+    <div class="grid g2">
+      <div class="chart-card"><h3>Tỷ lệ hủy đơn theo ngày (%)</h3><div class="chart-wrap"><canvas id="ch-cancel-day"></canvas></div></div>
+      <div class="chart-card"><h3>Cơ cấu sử dụng doanh thu</h3><div class="chart-wrap"><canvas id="ch-dt-breakdown"></canvas></div></div>
+    </div>
+
+    <h2>🔍 Nhận định nhanh</h2>
+    <div id="overview-insights"></div>
+  </div>
+
+  <!-- ============ CHI PHÍ ============ -->
+  <div class="page" id="cost">
+    <div class="grid g4" style="margin-bottom:14px">
+      <div class="kpi"><div class="label">Phí cố định</div><div class="value" id="cp-cd"></div><div class="sub" id="cp-cd-sub"></div></div>
+      <div class="kpi"><div class="label">Phí dịch vụ</div><div class="value" id="cp-dv"></div><div class="sub" id="cp-dv-sub"></div></div>
+      <div class="kpi"><div class="label">Phí thanh toán</div><div class="value" id="cp-tt"></div><div class="sub" id="cp-tt-sub"></div></div>
+      <div class="kpi"><div class="label">Phí vận chuyển trả hàng</div><div class="value" id="cp-vc"></div><div class="sub" id="cp-vc-sub"></div></div>
+    </div>
+    <div class="grid g4" style="margin-bottom:14px">
+      <div class="kpi"><div class="label">Phí Aff (Tiếp thị liên kết)</div><div class="value" id="cp-aff"></div><div class="sub" id="cp-aff-sub"></div></div>
+      <div class="kpi warn"><div class="label">Tổng phí sàn</div><div class="value" id="cp-san"></div><div class="sub" id="cp-san-sub"></div></div>
+      <div class="kpi warn"><div class="label">Chi phí ADS</div><div class="value" id="cp-ads"></div><div class="sub" id="cp-ads-sub"></div></div>
+      <div class="kpi bad"><div class="label">Tổng toàn bộ phí</div><div class="value" id="cp-total"></div><div class="sub" id="cp-total-sub"></div></div>
+    </div>
+
+    <div class="grid g2" style="margin-bottom:14px">
+      <div class="chart-card"><h3>Cơ cấu chi phí</h3><div class="chart-wrap"><canvas id="ch-cost-pie"></canvas></div></div>
+      <div class="chart-card"><h3>Tỷ trọng các loại phí / Doanh thu</h3><div class="chart-wrap"><canvas id="ch-cost-bar"></canvas></div></div>
+    </div>
+    <div class="chart-card" style="margin-bottom:14px">
+      <h3>Chi phí theo ngày (Phí sàn vs ADS)</h3>
+      <div class="chart-wrap tall"><canvas id="ch-cost-day"></canvas></div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-top:0">Chi tiết tỷ lệ phí trên doanh thu</h3>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>Loại phí</th><th class="right">Giá trị (VND)</th><th class="right">% / DT</th><th>Nhận định</th></tr></thead>
+        <tbody id="cost-detail-table"></tbody>
+      </table>
+      </div>
+      <div class="note" id="cost-note"></div>
+    </div>
+  </div>
+
+  <!-- ============ SKU ============ -->
+  <div class="page" id="sku">
+    <div class="grid g2" style="margin-bottom:14px">
+      <div class="chart-card"><h3>Top 10 SKU theo doanh thu</h3><div class="chart-wrap tall"><canvas id="ch-top-sku"></canvas></div></div>
+      <div class="chart-card"><h3>Doanh thu theo phân loại sản phẩm</h3><div class="chart-wrap tall"><canvas id="ch-cat-pie"></canvas></div></div>
+    </div>
+
+    <div class="card" style="margin-bottom:14px">
+      <h3 style="margin-top:0">Tổng hợp theo phân loại</h3>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>Phân loại</th><th class="right">Số SKU</th><th class="right">SL bán</th><th class="right">Doanh thu</th><th class="right">% DT</th><th class="right">Giá vốn</th><th class="right">Biên GV</th></tr></thead>
+        <tbody id="cat-table"></tbody>
+      </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-top:0">Chi tiết từng SKU</h3>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>SKU</th><th>Tên</th><th>Phân loại</th><th class="right">SL bán</th><th class="right">Số đơn</th><th class="right">Doanh thu</th><th class="right">Giá vốn</th><th class="right">LN gộp</th><th class="right">Biên GV</th></tr></thead>
+        <tbody id="sku-table"></tbody>
+      </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ GIÁ VỐN & LN GỘP ============ -->
+  <div class="page" id="cogs">
+    <div class="grid g4" style="margin-bottom:14px">
+      <div class="kpi warn"><div class="label">Tổng giá vốn (đơn HT)</div><div class="value" id="cogs-total"></div><div class="sub" id="cogs-total-sub"></div></div>
+      <div class="kpi"><div class="label">Giá vốn hàng bán</div><div class="value" id="cogs-sold"></div><div class="sub">Hàng tính DT</div></div>
+      <div class="kpi bad"><div class="label">Giá vốn hàng tặng</div><div class="value" id="cogs-gift"></div><div class="sub" id="cogs-gift-sub"></div></div>
+      <div class="kpi good"><div class="label">Biên giá vốn TB</div><div class="value" id="cogs-margin"></div><div class="sub">(DT - GV) / DT</div></div>
+    </div>
+
+    <div class="grid g2" style="margin-bottom:14px">
+      <div class="chart-card"><h3>Giá vốn theo phân loại</h3><div class="chart-wrap tall"><canvas id="ch-cogs-cat"></canvas></div></div>
+      <div class="chart-card"><h3>Biên LN gộp (sau giá vốn) theo phân loại</h3><div class="chart-wrap tall"><canvas id="ch-margin-cat"></canvas></div></div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-top:0">Bảng giá vốn chuẩn (master)</h3>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>SKU</th><th>Tên phân loại</th><th>Nhóm</th><th class="right">Giá vốn / sp (VND)</th></tr></thead>
+        <tbody id="gv-master-table"></tbody>
+      </table>
+      </div>
+      <div class="note">Lưu ý: Có 2 SKU phụ trong đơn hàng (Bông tẩy trang, Tăm bông) không có trong bảng giá vốn master — được coi là hàng tặng thuần và bỏ qua khi tính giá vốn.</div>
+    </div>
+  </div>
+
+  <!-- ============ PROFIT / SKU ============ -->
+  <div class="page" id="profit">
+    <div class="chart-card" style="margin-bottom:14px">
+      <h3>Đóng góp lợi nhuận gộp (sau GV, trước phí) theo SKU</h3>
+      <div class="chart-wrap tall"><canvas id="ch-profit-sku"></canvas></div>
+    </div>
+    <div class="chart-card" style="margin-bottom:14px">
+      <h3>Biên LN gộp từng SKU (%)</h3>
+      <div class="chart-wrap tall"><canvas id="ch-margin-sku"></canvas></div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-top:0">Bảng xếp hạng SKU theo LN gộp</h3>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>#</th><th>SKU / Tên</th><th>Nhóm</th><th class="right">DT</th><th class="right">Giá vốn</th><th class="right">LN gộp</th><th class="right">Biên</th><th>Đánh giá</th></tr></thead>
+        <tbody id="profit-table"></tbody>
+      </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ ADS ============ -->
+  <div class="page" id="ads">
+    <div class="grid g4" style="margin-bottom:14px">
+      <div class="kpi warn"><div class="label">Tổng chi phí ADS</div><div class="value" id="ads-cost"></div><div class="sub" id="ads-cost-sub"></div></div>
+      <div class="kpi good"><div class="label">Doanh số từ ADS</div><div class="value" id="ads-rev"></div><div class="sub" id="ads-rev-sub"></div></div>
+      <div class="kpi info"><div class="label">ROAS</div><div class="value" id="ads-roas"></div><div class="sub">Doanh số ADS / chi phí</div></div>
+      <div class="kpi info"><div class="label">ACOS</div><div class="value" id="ads-acos"></div><div class="sub">Chi phí ADS / DT ADS</div></div>
+    </div>
+    <div class="grid g4" style="margin-bottom:14px">
+      <div class="kpi"><div class="label">Đơn từ ADS</div><div class="value" id="ads-orders"></div><div class="sub">Lượt chuyển đổi</div></div>
+      <div class="kpi"><div class="label">CPA (Cost per Order)</div><div class="value" id="ads-cpa"></div><div class="sub">Chi phí / đơn ADS</div></div>
+      <div class="kpi"><div class="label">CTR TB</div><div class="value" id="ads-ctr"></div><div class="sub">Click / lượt xem</div></div>
+      <div class="kpi"><div class="label">% ADS / DT toàn shop</div><div class="value" id="ads-share"></div><div class="sub">Tỷ trọng đóng góp</div></div>
+    </div>
+
+    <div class="grid g2" style="margin-bottom:14px">
+      <div class="chart-card"><h3>Chi phí ADS theo ngày</h3><div class="chart-wrap"><canvas id="ch-ads-day"></canvas></div></div>
+      <div class="chart-card"><h3>ROAS theo ngày</h3><div class="chart-wrap"><canvas id="ch-roas-day"></canvas></div></div>
+    </div>
+
+    <div class="card">
+      <h3 style="margin-top:0">Chi tiết chiến dịch ADS</h3>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>Chiến dịch</th><th>Trạng thái</th><th>Loại</th><th class="right">Impr</th><th class="right">Click</th><th class="right">CTR</th><th class="right">Đơn</th><th class="right">CR</th><th class="right">DT</th><th class="right">Chi phí</th><th class="right">ROAS</th><th class="right">ACOS</th></tr></thead>
+        <tbody id="ads-table"></tbody>
+      </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TREND & CẢNH BÁO ============ -->
+  <div class="page" id="trend">
+    <div class="chart-card" style="margin-bottom:14px">
+      <h3>Toàn cảnh: DT, LN sau GV, Chi phí ADS theo ngày</h3>
+      <div class="chart-wrap tall"><canvas id="ch-overall"></canvas></div>
+    </div>
+
+    <div class="grid g2" style="margin-bottom:14px">
+      <div class="chart-card"><h3>Biên LN sau GV theo ngày (%)</h3><div class="chart-wrap"><canvas id="ch-margin-day"></canvas></div></div>
+      <div class="chart-card"><h3>AOV theo ngày</h3><div class="chart-wrap"><canvas id="ch-aov-day"></canvas></div></div>
+    </div>
+
+    <div class="card" style="margin-bottom:14px">
+      <h3 style="margin-top:0">⚠️ Lý do hủy đơn (TOP)</h3>
+      <div class="table-wrap">
+      <table>
+        <thead><tr><th>Lý do hủy</th><th class="right">Số đơn</th><th class="right">% trong tổng hủy</th></tr></thead>
+        <tbody id="cancel-table"></tbody>
+      </table>
+      </div>
+    </div>
+
+    <h2>🚨 Cảnh báo & Bất thường</h2>
+    <div id="trend-alerts"></div>
+  </div>
+
+  <!-- ============ QUYẾT ĐỊNH ============ -->
+  <div class="page" id="decision">
+    <h2 style="margin-top:0">⚡ Khuyến nghị hành động cho CEO</h2>
+    <div id="decision-cards"></div>
+  </div>
+
+  <div class="footer">
+    Dashboard tạo tự động • Dữ liệu: SHOPEE_TỪ_HẢO_T4.xlsx • Đơn vị tiền tệ: VND<br>
+    Logic: <strong>DT = Sum "Tổng giá trị đơn hàng (VND)" của TẤT CẢ đơn (kể cả hủy), dedupe theo Mã đơn hàng</strong> = "Doanh số không bao gồm trợ giá Shopee".<br>
+    Phí sàn + giá vốn chỉ tính cho đơn hoàn thành (đơn hủy thực tế Shopee không thu phí, hàng không xuất kho). Tỷ lệ phí/DT và biên LN dùng mẫu số là DT all đơn.
+  </div>
+</div>
+
+<script>const DASH_DATA = {"period": {"from": "2026-04-01", "to": "2026-04-29", "days_actual": 29, "days_in_month": 30, "note": "Từ Hảo T4/2026. DT theo đơn ĐẶT trong T4 (accrual). Phí theo CASH-BASIS — đơn DONE trong T4 (khớp báo cáo Shopee)."}, "kpi": {"DT": 587878258.0, "DT_ok": 468410773.0, "DT_cancel": 119467485.0, "LN_truoc_GV": 352047665.0, "LN_sau_GV": 100355537.90327841, "margin": 17.070802761900815, "AOV": 162925.48626086957, "n_orders_ok": 2875, "n_orders_cancel": 645, "n_orders_total": 3520, "cancel_rate": 18.323863636363637, "qty_sold": 3093, "qty_gift": 204, "cogs": 251692127.0967216, "cogs_sold": 251692127.09672165, "cogs_gift": 0.0, "chi_ads": 104574379.0}, "phi": {"co_dinh": 67208713.0, "dich_vu": 26393318.0, "thanh_toan": 23627112.0, "van_chuyen": 94400.0, "aff": 13932671.0, "ads": 104574379.0, "tong_san": 131256214.0, "tong_phi": 235830593.0, "ty_le_aff_dt": 2.3699925640046375, "ty_le_san_dt": 22.3271080727738, "ty_le_vc_dt": 0.016057746432255368, "ty_le_ads_dt": 17.788441327251807, "ty_le_tong_dt": 40.11554940002561, "ty_le_co_dinh_dt": 11.432420247798992, "ty_le_dv_dt": 4.489589067265692, "ty_le_tt_dt": 4.019048447272224}, "trend": [{"Ngày": "2026-04-01", "DT": 6220236, "DT_ok": 5380236, "orders_ok": 40, "orders_cancel": 4, "DT_cancel": 840000, "phi_cd": 0.0, "phi_dv": 0.0, "phi_tt": 0.0, "phi_vc": 0.0, "cogs": 2619680.637672163, "ads_cost": 36461.0, "visits": 481, "add_cart": 188, "phi_aff": 147419.13066353952, "total_fee_san": 147419.13066353952, "total_fee": 183880.13066353952, "LN_truoc_GV": 6036355.869336461, "LN_sau_GV": 3416675.2316642976, "cancel_rate": 9.090909090909092, "AOV": 134505.9, "CVR": 8.316008316008316, "margin": 54.92838586292059, "ROAS": 170.59970927840706}, {"Ngày": "2026-04-02", "DT": 4637614, "DT_ok": 3883063, "orders_ok": 32, "orders_cancel": 8, "DT_cancel": 754551, "phi_cd": 53900.0, "phi_dv": 21400.0, "phi_tt": 18904.0, "phi_vc": 0.0, "cogs": 1415405.48, "ads_cost": 450000.0, "visits": 527, "add_cart": 217, "phi_aff": 109911.10694723805, "total_fee_san": 204115.10694723803, "total_fee": 654115.1069472381, "LN_truoc_GV": 3983498.893052762, "LN_sau_GV": 2568093.413052762, "cancel_rate": 20.0, "AOV": 121345.71875, "CVR": 6.072106261859583, "margin": 55.375316122746774, "ROAS": 10.305808888888889}, {"Ngày": "2026-04-03", "DT": 13241551, "DT_ok": 9891904, "orders_ok": 64, "orders_cancel": 19, "DT_cancel": 3349647, "phi_cd": 253680.0, "phi_dv": 105480.0, "phi_tt": 88973.0, "phi_vc": 0.0, "cogs": 4780287.997672163, "ads_cost": 2534332.0, "visits": 1252, "add_cart": 580, "phi_aff": 313823.77405888174, "total_fee_san": 761956.7740588817, "total_fee": 3296288.7740588817, "LN_truoc_GV": 9945262.225941118, "LN_sau_GV": 5164974.228268955, "cancel_rate": 22.89156626506024, "AOV": 154561.0, "CVR": 5.111821086261981, "margin": 39.00581003138496, "ROAS": 5.224868328222191}, {"Ngày": "2026-04-04", "DT": 51333127, "DT_ok": 41694468, "orders_ok": 305, "orders_cancel": 64, "DT_cancel": 9638659, "phi_cd": 326760.0, "phi_dv": 123360.0, "phi_tt": 114601.0, "phi_vc": 0.0, "cogs": 17223847.635344326, "ads_cost": 10866998.0, "visits": 2785, "add_cart": 1405, "phi_aff": 1216591.292771057, "total_fee_san": 1781312.292771057, "total_fee": 12648310.292771056, "LN_truoc_GV": 38684816.70722894, "LN_sau_GV": 21460969.071884617, "cancel_rate": 17.344173441734416, "AOV": 136703.1737704918, "CVR": 10.951526032315979, "margin": 41.807250650997005, "ROAS": 4.723763361325731}, {"Ngày": "2026-04-05", "DT": 22237196, "DT_ok": 17413791, "orders_ok": 140, "orders_cancel": 40, "DT_cancel": 4823405, "phi_cd": 1444240.0, "phi_dv": 589640.0, "phi_tt": 502154.0, "phi_vc": 0.0, "cogs": 6453268.875344326, "ads_cost": 4948221.0, "visits": 1826, "add_cart": 857, "phi_aff": 527019.8916431367, "total_fee_san": 3063053.8916431367, "total_fee": 8011274.891643137, "LN_truoc_GV": 14225921.108356863, "LN_sau_GV": 7772652.2330125375, "cancel_rate": 22.22222222222222, "AOV": 124384.22142857143, "CVR": 7.667031763417305, "margin": 34.95338276018495, "ROAS": 4.493977936717054}, {"Ngày": "2026-04-06", "DT": 19110141, "DT_ok": 16713403, "orders_ok": 124, "orders_cancel": 16, "DT_cancel": 2396738, "phi_cd": 1418760.0, "phi_dv": 600360.0, "phi_tt": 498411.0, "phi_vc": 0.0, "cogs": 5984449.837672163, "ads_cost": 3872070.0, "visits": 1432, "add_cart": 656, "phi_aff": 452908.92067080154, "total_fee_san": 2970439.920670802, "total_fee": 6842509.920670802, "LN_truoc_GV": 12267631.079329198, "LN_sau_GV": 6283181.241657035, "cancel_rate": 11.428571428571429, "AOV": 134785.50806451612, "CVR": 8.659217877094973, "margin": 32.87878012860834, "ROAS": 4.935381075238825}, {"Ngày": "2026-04-07", "DT": 7186341, "DT_ok": 6164493, "orders_ok": 41, "orders_cancel": 8, "DT_cancel": 1021848, "phi_cd": 2282980.0, "phi_dv": 943280.0, "phi_tt": 801148.0, "phi_vc": 0.0, "cogs": 2885066.36, "ads_cost": 0.0, "visits": 530, "add_cart": 255, "phi_aff": 170315.74732401653, "total_fee_san": 4197723.747324017, "total_fee": 4197723.747324017, "LN_truoc_GV": 2988617.252675983, "LN_sau_GV": 103550.89267598325, "cancel_rate": 16.3265306122449, "AOV": 150353.48780487804, "CVR": 7.735849056603773, "margin": 1.4409404267899792, "ROAS": 0.0}, {"Ngày": "2026-04-08", "DT": 15312706, "DT_ok": 12099221, "orders_ok": 82, "orders_cancel": 11, "DT_cancel": 3213485, "phi_cd": 2890160.0, "phi_dv": 1215760.0, "phi_tt": 1015287.0, "phi_vc": 0.0, "cogs": 5647598.96, "ads_cost": 2456813.0, "visits": 1111, "add_cart": 509, "phi_aff": 362909.993547892, "total_fee_san": 5484116.993547892, "total_fee": 7940929.993547892, "LN_truoc_GV": 7371776.006452108, "LN_sau_GV": 1724177.0464521078, "cancel_rate": 11.827956989247312, "AOV": 147551.4756097561, "CVR": 7.380738073807381, "margin": 11.25978025341901, "ROAS": 6.2327519432695935}, {"Ngày": "2026-04-09", "DT": 13657083, "DT_ok": 10718263, "orders_ok": 86, "orders_cancel": 27, "DT_cancel": 2938820, "phi_cd": 3325980.0, "phi_dv": 1334280.0, "phi_tt": 1168469.0, "phi_vc": 0.0, "cogs": 4441940.117672163, "ads_cost": 2968856.0, "visits": 1233, "add_cart": 608, "phi_aff": 323671.85155994154, "total_fee_san": 6152400.851559942, "total_fee": 9121256.85155994, "LN_truoc_GV": 4535826.148440059, "LN_sau_GV": 93886.03076789621, "cancel_rate": 23.893805309734514, "AOV": 124630.96511627907, "CVR": 6.974858069748581, "margin": 0.6874530290831228, "ROAS": 4.600116341109168}, {"Ngày": "2026-04-10", "DT": 9452484, "DT_ok": 6580876, "orders_ok": 51, "orders_cancel": 17, "DT_cancel": 2871608, "phi_cd": 2385040.0, "phi_dv": 999440.0, "phi_tt": 838976.0, "phi_vc": 16500.0, "cogs": 2934882.96, "ads_cost": 1624664.0, "visits": 951, "add_cart": 378, "phi_aff": 224023.16791372816, "total_fee_san": 4463979.167913728, "total_fee": 6088643.167913728, "LN_truoc_GV": 3363840.8320862716, "LN_sau_GV": 428957.87208627164, "cancel_rate": 25.0, "AOV": 129036.7843137255, "CVR": 5.3627760252365935, "margin": 4.538043884404053, "ROAS": 5.818116238188327}, {"Ngày": "2026-04-11", "DT": 7390055, "DT_ok": 6204170, "orders_ok": 48, "orders_cancel": 12, "DT_cancel": 1185885, "phi_cd": 2150540.0, "phi_dv": 902440.0, "phi_tt": 756853.0, "phi_vc": 0.0, "cogs": 2919901.36, "ads_cost": 1309150.0, "visits": 866, "add_cart": 375, "phi_aff": 175143.75397585295, "total_fee_san": 3984976.753975853, "total_fee": 5294126.753975853, "LN_truoc_GV": 2095928.2460241467, "LN_sau_GV": -823973.1139758532, "cancel_rate": 20.0, "AOV": 129253.54166666667, "CVR": 5.542725173210162, "margin": -11.149756178754464, "ROAS": 5.644926097085896}, {"Ngày": "2026-04-12", "DT": 8220177, "DT_ok": 7588353, "orders_ok": 56, "orders_cancel": 6, "DT_cancel": 631824, "phi_cd": 1988140.0, "phi_dv": 823040.0, "phi_tt": 702105.0, "phi_vc": 0.0, "cogs": 2870158.24, "ads_cost": 1318423.0, "visits": 960, "add_cart": 425, "phi_aff": 194817.58364801953, "total_fee_san": 3708102.5836480195, "total_fee": 5026525.5836480195, "LN_truoc_GV": 3193651.4163519805, "LN_sau_GV": 323493.1763519803, "cancel_rate": 9.67741935483871, "AOV": 135506.30357142858, "CVR": 5.833333333333333, "margin": 3.935355362201815, "ROAS": 6.234855581251237}, {"Ngày": "2026-04-13", "DT": 8059616, "DT_ok": 5925931, "orders_ok": 41, "orders_cancel": 13, "DT_cancel": 2133685, "phi_cd": 1599920.0, "phi_dv": 670120.0, "phi_tt": 562019.0, "phi_vc": 32700.0, "cogs": 2463682.0, "ads_cost": 1381045.0, "visits": 820, "add_cart": 345, "phi_aff": 191012.29988732803, "total_fee_san": 3055771.299887328, "total_fee": 4436816.2998873275, "LN_truoc_GV": 3622799.7001126725, "LN_sau_GV": 1159117.7001126725, "cancel_rate": 24.074074074074073, "AOV": 144534.9024390244, "CVR": 5.0, "margin": 14.381798092026624, "ROAS": 5.8358822485871205}, {"Ngày": "2026-04-14", "DT": 14760631, "DT_ok": 8293722, "orders_ok": 64, "orders_cancel": 15, "DT_cancel": 6466909, "phi_cd": 1380260.0, "phi_dv": 583360.0, "phi_tt": 485690.0, "phi_vc": 0.0, "cogs": 2736749.96, "ads_cost": 2778369.0, "visits": 1032, "add_cart": 472, "phi_aff": 349825.8571001634, "total_fee_san": 2799135.8571001636, "total_fee": 5577504.857100164, "LN_truoc_GV": 9183126.142899837, "LN_sau_GV": 6446376.182899837, "cancel_rate": 18.9873417721519, "AOV": 129589.40625, "CVR": 6.2015503875969, "margin": 43.6727683450649, "ROAS": 5.312696405697012}, {"Ngày": "2026-04-15", "DT": 25344738, "DT_ok": 21372142, "orders_ok": 152, "orders_cancel": 35, "DT_cancel": 3972596, "phi_cd": 1363460.0, "phi_dv": 560560.0, "phi_tt": 480067.0, "phi_vc": 0.0, "cogs": 9439492.92, "ads_cost": 4629699.0, "visits": 1560, "add_cart": 770, "phi_aff": 600668.4059664578, "total_fee_san": 3004755.405966458, "total_fee": 7634454.405966458, "LN_truoc_GV": 17710283.594033543, "LN_sau_GV": 8270790.674033543, "cancel_rate": 18.71657754010695, "AOV": 140606.19736842104, "CVR": 9.743589743589745, "margin": 32.63316698729947, "ROAS": 5.474381379869404}, {"Ngày": "2026-04-16", "DT": 33159826, "DT_ok": 28207794, "orders_ok": 171, "orders_cancel": 32, "DT_cancel": 4952032, "phi_cd": 1642620.0, "phi_dv": 670320.0, "phi_tt": 576674.0, "phi_vc": 0.0, "cogs": 15125338.92, "ads_cost": 6642716.0, "visits": 2057, "add_cart": 910, "phi_aff": 785885.4104368766, "total_fee_san": 3675499.4104368766, "total_fee": 10318215.410436876, "LN_truoc_GV": 22841610.589563124, "LN_sau_GV": 7716271.669563124, "cancel_rate": 15.763546798029557, "AOV": 164957.8596491228, "CVR": 8.313077297034516, "margin": 23.269940166643586, "ROAS": 4.991907828063099}, {"Ngày": "2026-04-17", "DT": 20190378, "DT_ok": 18325710, "orders_ok": 94, "orders_cancel": 9, "DT_cancel": 1864668, "phi_cd": 1733060.0, "phi_dv": 723160.0, "phi_tt": 611639.0, "phi_vc": 0.0, "cogs": 10780253.36, "ads_cost": 2775686.0, "visits": 1239, "add_cart": 503, "phi_aff": 478510.45724442834, "total_fee_san": 3546369.4572444283, "total_fee": 6322055.457244428, "LN_truoc_GV": 13868322.542755572, "LN_sau_GV": 3088069.1827555727, "cancel_rate": 8.737864077669903, "AOV": 194954.36170212767, "CVR": 7.586763518966909, "margin": 15.29475665465784, "ROAS": 7.274013703279118}, {"Ngày": "2026-04-18", "DT": 21659558, "DT_ok": 18181013, "orders_ok": 99, "orders_cancel": 18, "DT_cancel": 3478545, "phi_cd": 2226140.0, "phi_dv": 915040.0, "phi_tt": 776580.0, "phi_vc": 0.0, "cogs": 10399260.32, "ads_cost": 1965632.0, "visits": 1065, "add_cart": 534, "phi_aff": 513329.9139962717, "total_fee_san": 4431089.913996272, "total_fee": 6396721.913996272, "LN_truoc_GV": 15262836.086003728, "LN_sau_GV": 4863575.766003728, "cancel_rate": 15.384615384615385, "AOV": 183646.59595959596, "CVR": 9.295774647887324, "margin": 22.454639960814195, "ROAS": 11.019131760166704}, {"Ngày": "2026-04-19", "DT": 15723792, "DT_ok": 12427789, "orders_ok": 75, "orders_cancel": 14, "DT_cancel": 3296003, "phi_cd": 2269400.0, "phi_dv": 912400.0, "phi_tt": 801510.0, "phi_vc": 0.0, "cogs": 7687923.24, "ads_cost": 1042981.0, "visits": 980, "add_cart": 567, "phi_aff": 372652.70117955614, "total_fee_san": 4355962.701179557, "total_fee": 5398943.701179557, "LN_truoc_GV": 10324848.298820443, "LN_sau_GV": 2636925.058820443, "cancel_rate": 15.730337078651685, "AOV": 165703.85333333333, "CVR": 7.653061224489796, "margin": 16.770287083551114, "ROAS": 15.075818255557868}, {"Ngày": "2026-04-20", "DT": 19421978, "DT_ok": 15520171, "orders_ok": 73, "orders_cancel": 18, "DT_cancel": 3901807, "phi_cd": 3161900.0, "phi_dv": 1245400.0, "phi_tt": 1112363.0, "phi_vc": 0.0, "cogs": 11178238.48, "ads_cost": 2810404.0, "visits": 956, "add_cart": 417, "phi_aff": 460299.43438261666, "total_fee_san": 5979962.434382617, "total_fee": 8790366.434382617, "LN_truoc_GV": 10631611.565617383, "LN_sau_GV": -546626.9143826179, "cancel_rate": 19.78021978021978, "AOV": 212605.08219178082, "CVR": 7.635983263598327, "margin": -2.8144760249580036, "ROAS": 6.910742370136108}, {"Ngày": "2026-04-21", "DT": 18678323, "DT_ok": 15243279, "orders_ok": 77, "orders_cancel": 12, "DT_cancel": 3435044, "phi_cd": 3478545.0, "phi_dv": 1344870.0, "phi_tt": 1221836.0, "phi_vc": 0.0, "cogs": 9534167.48, "ads_cost": 3474116.0, "visits": 1322, "add_cart": 488, "phi_aff": 442674.866180768, "total_fee_san": 6487925.866180768, "total_fee": 9962041.866180768, "LN_truoc_GV": 8716281.133819232, "LN_sau_GV": -817886.3461807687, "cancel_rate": 13.48314606741573, "AOV": 197964.66233766233, "CVR": 5.8245083207261725, "margin": -4.378799671580627, "ROAS": 5.376424678968693}, {"Ngày": "2026-04-22", "DT": 24871901, "DT_ok": 20674390, "orders_ok": 110, "orders_cancel": 19, "DT_cancel": 4197511, "phi_cd": 3193930.0, "phi_dv": 1203680.0, "phi_tt": 1123249.0, "phi_vc": 0.0, "cogs": 12025241.84, "ads_cost": 5111781.0, "visits": 1437, "add_cart": 607, "phi_aff": 589462.2042265951, "total_fee_san": 6110321.204226595, "total_fee": 11222102.204226594, "LN_truoc_GV": 13649798.795773406, "LN_sau_GV": 1624556.9557734057, "cancel_rate": 14.728682170542637, "AOV": 187949.0, "CVR": 7.6548364648573415, "margin": 6.531695971986242, "ROAS": 4.865603788581709}, {"Ngày": "2026-04-23", "DT": 24473318, "DT_ok": 18898219, "orders_ok": 87, "orders_cancel": 24, "DT_cancel": 5575099, "phi_cd": 2967440.0, "phi_dv": 1111840.0, "phi_tt": 1043579.0, "phi_vc": 0.0, "cogs": 12704393.6, "ads_cost": 4071627.0, "visits": 1514, "add_cart": 593, "phi_aff": 580015.8167652086, "total_fee_san": 5702874.816765209, "total_fee": 9774501.816765208, "LN_truoc_GV": 14698816.183234792, "LN_sau_GV": 1994422.5832347926, "cancel_rate": 21.62162162162162, "AOV": 217220.908045977, "CVR": 5.746367239101717, "margin": 8.149375508604075, "ROAS": 6.010697443552663}, {"Ngày": "2026-04-24", "DT": 28906369, "DT_ok": 22021482, "orders_ok": 107, "orders_cancel": 32, "DT_cancel": 6884887, "phi_cd": 2815400.0, "phi_dv": 1032400.0, "phi_tt": 988365.0, "phi_vc": 16500.0, "cogs": 15554037.2, "ads_cost": 5992791.0, "visits": 2133, "add_cart": 861, "phi_aff": 685078.7958237418, "total_fee_san": 5537743.795823742, "total_fee": 11530534.795823742, "LN_truoc_GV": 17375834.20417626, "LN_sau_GV": 1821797.004176259, "cancel_rate": 23.021582733812952, "AOV": 205808.2429906542, "CVR": 5.0164088138771685, "margin": 6.302406933836135, "ROAS": 4.8235236303084825}, {"Ngày": "2026-04-25", "DT": 43038675, "DT_ok": 33624011, "orders_ok": 188, "orders_cancel": 46, "DT_cancel": 9414664, "phi_cd": 3209696.0, "phi_dv": 1172056.0, "phi_tt": 1130615.0, "phi_vc": 0.0, "cogs": 22917273.957672164, "ads_cost": 8500000.0, "visits": 2174, "add_cart": 1032, "phi_aff": 1020013.3971461231, "total_fee_san": 6532380.397146123, "total_fee": 15032380.397146124, "LN_truoc_GV": 28006294.602853876, "LN_sau_GV": 5089020.645181712, "cancel_rate": 19.65811965811966, "AOV": 178851.12234042553, "CVR": 8.647654093836247, "margin": 11.824296740505398, "ROAS": 5.0633735294117646}, {"Ngày": "2026-04-26", "DT": 33896926, "DT_ok": 25696445, "orders_ok": 139, "orders_cancel": 45, "DT_cancel": 8200481, "phi_cd": 3515492.0, "phi_dv": 1304812.0, "phi_tt": 1234139.0, "phi_vc": 0.0, "cogs": 15812814.877672164, "ads_cost": 6670671.0, "visits": 2351, "add_cart": 1056, "phi_aff": 803354.6256261547, "total_fee_san": 6857797.625626154, "total_fee": 13528468.625626154, "LN_truoc_GV": 20368457.374373846, "LN_sau_GV": 4555642.496701682, "cancel_rate": 24.456521739130434, "AOV": 184866.51079136692, "CVR": 5.912377711612081, "margin": 13.43969213226498, "ROAS": 5.081486705010636}, {"Ngày": "2026-04-27", "DT": 37033078, "DT_ok": 27472384, "orders_ok": 145, "orders_cancel": 33, "DT_cancel": 9560694, "phi_cd": 3286380.0, "phi_dv": 1248480.0, "phi_tt": 1160220.0, "phi_vc": 0.0, "cogs": 16209222.32, "ads_cost": 6116674.0, "visits": 2650, "add_cart": 1011, "phi_aff": 877681.1948220375, "total_fee_san": 6572761.194822038, "total_fee": 12689435.194822038, "LN_truoc_GV": 24343642.805177964, "LN_sau_GV": 8134420.485177964, "cancel_rate": 18.53932584269663, "AOV": 189464.71724137932, "CVR": 5.471698113207547, "margin": 21.965283266970044, "ROAS": 6.05444691019989}, {"Ngày": "2026-04-28", "DT": 27219436, "DT_ok": 22110912, "orders_ok": 128, "orders_cancel": 30, "DT_cancel": 5108524, "phi_cd": 4295305.0, "phi_dv": 1596230.0, "phi_tt": 1508034.0, "phi_vc": 0.0, "cogs": 11543127.68, "ads_cost": 5957322.0, "visits": 2310, "add_cart": 955, "phi_aff": 645098.6091640014, "total_fee_san": 8044667.609164001, "total_fee": 14001989.609164001, "LN_truoc_GV": 13217446.390835999, "LN_sau_GV": 1674318.7108359989, "cancel_rate": 18.9873417721519, "AOV": 172741.5, "CVR": 5.541125541125541, "margin": 6.151188109981407, "ROAS": 4.569072479211297}, {"Ngày": "2026-04-29", "DT": 13441004, "DT_ok": 10083138, "orders_ok": 56, "orders_cancel": 18, "DT_cancel": 3357866, "phi_cd": 4153881.0, "phi_dv": 1548366.0, "phi_tt": 1459266.0, "phi_vc": 28700.0, "cogs": 5404420.48, "ads_cost": 2266877.0, "visits": 1082, "add_cart": 423, "phi_aff": 318550.7953275659, "total_fee_san": 7508763.795327566, "total_fee": 9775640.795327567, "LN_truoc_GV": 3665363.2046724334, "LN_sau_GV": -1739057.275327567, "cancel_rate": 24.324324324324326, "AOV": 180056.0357142857, "CVR": 5.175600739371535, "margin": -12.93844771809879, "ROAS": 5.9293045013028935}], "sku": [{"SKU phân loại hàng": "8809495683338", "qty": 338, "revenue": 88467404.64312443, "cogs": 69102072.0, "ten_pl": "NSebum Kiềm Dầu 50ml", "phan_loai": "KCN Make Prem", "ten_sp": "Kem Chống Nắng Vật Lý Make Prem UV Sun Cream Make P:rem SPF 50+ PA++++ 70ml", "LN_GV": 19365332.64312443, "margin_gv": 21.889794010849258, "orders": 333}, {"SKU phân loại hàng": "8938557673014", "qty": 643, "revenue": 79480870.33819418, "cogs": 23814791.0, "ten_pl": "Derma Extra - 18g", "phan_loai": "Gel mụn Actidem", "ten_sp": "Gel giảm mụn, mờ thâm Actidem Derma Gel 18g/ Derma Gel 40g/ Derma Extra 18g - Từ Hảo", "LN_GV": 55666079.33819418, "margin_gv": 70.03707823194796, "orders": 628}, {"SKU phân loại hàng": "8938557673151", "qty": 412, "revenue": 46902923.15780085, "cogs": 13351684.0, "ten_pl": "Derma Gel - 18g", "phan_loai": "Gel mụn Actidem", "ten_sp": "Gel giảm mụn, mờ thâm Actidem Derma Gel 18g/ Derma Gel 40g/ Derma Extra 18g - Từ Hảo", "LN_GV": 33551239.157800853, "margin_gv": 71.5333648713548, "orders": 407}, {"SKU phân loại hàng": "893855767301", "qty": 512, "revenue": 40588846.44872438, "cogs": 11377664.0, "ten_pl": "Extra Gel 10g", "phan_loai": "Gel mụn Actidem", "ten_sp": "Gel giảm mụn, mờ thâm Actidem Derma Gel 18g/ Derma Gel 40g/ Derma Extra 18g - Từ Hảo", "LN_GV": 29211182.44872438, "margin_gv": 71.96849628536913, "orders": 502}, {"SKU phân loại hàng": "8938557673168", "qty": 226, "revenue": 40249227.92279098, "cogs": 13601159.120000001, "ten_pl": "Derma Gel - 40g", "phan_loai": "Gel mụn Actidem", "ten_sp": "Gel giảm mụn, mờ thâm Actidem Derma Gel 18g/ Derma Gel 40g/ Derma Extra 18g - Từ Hảo", "LN_GV": 26648068.80279098, "margin_gv": 66.20765211672945, "orders": 222}, {"SKU phân loại hàng": "590176988314", "qty": 203, "revenue": 25750012.425364625, "cogs": 21301196.0, "ten_pl": "B5 Xanh,500ml", "phan_loai": "Tẩy trang Eveline", "ten_sp": "Tẩy trang Eveline dịu nhẹ dành cho da nhạy cảm, da bị kích ứng 100ml/400ml/500ml - Từ Hảo", "LN_GV": 4448816.425364625, "margin_gv": 17.276948654915568, "orders": 178}, {"SKU phân loại hàng": "8809418751717", "qty": 85, "revenue": 25090851.24743212, "cogs": 22950000.0, "ten_pl": "30ml", "phan_loai": "Serum Angel's Liquid", "ten_sp": "Serum dưỡng trắng Angel's Liquid 7Day Whitening Program Glutathione 700 V-Ample cấp ẩm30ml", "LN_GV": 2140851.24743212, "margin_gv": 8.532397830269796, "orders": 85}, {"SKU phân loại hàng": "8809495684045", "qty": 52, "revenue": 15059254.646630237, "cogs": 11171888.0, "ten_pl": "Tone Up New 50ml", "phan_loai": "KCN Make Prem", "ten_sp": "Kem Chống Nắng Vật Lý Make Prem UV Sun Cream Make P:rem SPF 50+ PA++++ 70ml", "LN_GV": 3887366.646630237, "margin_gv": 25.813805117506934, "orders": 52}, {"SKU phân loại hàng": "8809495682102", "qty": 45, "revenue": 12400860.290037245, "cogs": 9667980.0, "ten_pl": "Tone Up 50ml", "phan_loai": "KCN Make Prem", "ten_sp": "Kem Chống Nắng Vật Lý Make Prem UV Sun Cream Make P:rem SPF 50+ PA++++ 70ml", "LN_GV": 2732880.2900372446, "margin_gv": 22.03782823223014, "orders": 44}, {"SKU phân loại hàng": "8936205621318", "qty": 38, "revenue": 10625334.0, "cogs": 11172000.0, "ten_pl": "-", "phan_loai": "Sữa Dưỡng Thể Dr Ceutics", "ten_sp": "Sữa Dưỡng Thể Dr Ceutics Niacinamide 10% + Alpha-Arbutin 2% Drceutics Body Lotion 200g - Từ Hảo", "LN_GV": -546666.0, "margin_gv": -5.144930032317101, "orders": 36}, {"SKU phân loại hàng": "8938557673229", "qty": 44, "revenue": 8968433.504512437, "cogs": 3422232.0, "ten_pl": "-", "phan_loai": "Serum Actidem", "ten_sp": "Tinh chất hỗ trợ giảm mụn và kiểm soát dầu Actidem Derma ZNP Serum 30ml", "LN_GV": 5546201.504512437, "margin_gv": 61.8413628391389, "orders": 44}, {"SKU phân loại hàng": "8938557673267", "qty": 69, "revenue": 8848073.584507043, "cogs": 2875023.0, "ten_pl": "Sạch sâu 150ml", "phan_loai": "Gel rửa mặt Actidem", "ten_sp": "GEL RỬA MẶT ACTIDEM TRẮNG HỒNG XANH DERMA/SENSITIVE/PURIFYING GEL CLEANSER 30/150/180ml - Từ Hảo", "LN_GV": 5973050.584507043, "margin_gv": 67.50679147793076, "orders": 65}, {"SKU phân loại hàng": "8938557673205", "qty": 56, "revenue": 6986580.629881582, "cogs": 1555568.0, "ten_pl": "Refill da dầu 200ml", "phan_loai": "Gel rửa mặt Actidem", "ten_sp": "GEL RỬA MẶT ACTIDEM TRẮNG HỒNG XANH DERMA/SENSITIVE/PURIFYING GEL CLEANSER 30/150/180ml - Từ Hảo", "LN_GV": 5431012.629881582, "margin_gv": 77.73491665798802, "orders": 56}, {"SKU phân loại hàng": "8809495683321", "qty": 21, "revenue": 5994741.353369763, "cogs": 4176396.0, "ten_pl": "Watery Nhẹ Mặt 50ml", "phan_loai": "KCN Make Prem", "ten_sp": "Kem Chống Nắng Vật Lý Make Prem UV Sun Cream Make P:rem SPF 50+ PA++++ 70ml", "LN_GV": 1818345.3533697631, "margin_gv": 30.332340399434166, "orders": 20}, {"SKU phân loại hàng": "8809495682126", "qty": 21, "revenue": 5924331.827505827, "cogs": 4239312.0, "ten_pl": "Calm Nhạy Cảm 50ml", "phan_loai": "KCN Make Prem", "ten_sp": "Kem Chống Nắng Vật Lý Make Prem UV Sun Cream Make P:rem SPF 50+ PA++++ 70ml", "LN_GV": 1685019.827505827, "margin_gv": 28.442360701041768, "orders": 20}, {"SKU phân loại hàng": "3031500311423", "qty": 12, "revenue": 5389186.530612245, "cogs": 3660000.0, "ten_pl": "150ML", "phan_loai": "Sữa rửa mặt ISIS Pharma", "ten_sp": "Sữa rửa mặt ISIS Pharma Teenderm Gel 150ml", "LN_GV": 1729186.5306122452, "margin_gv": 32.08622527333079, "orders": 12}, {"SKU phân loại hàng": "8809495682119", "qty": 14, "revenue": 4722668.0, "cogs": 3787840.0, "ten_pl": "Sữa vật lý lai 150ml", "phan_loai": "KCN Make Prem", "ten_sp": "Sữa Chống Nắng Make P:rem UV Defense Me. Make Prem Sun Fluid SPF 50+ PA++++ 55ml", "LN_GV": 934828.0, "margin_gv": 19.79448904729276, "orders": 13}, {"SKU phân loại hàng": "261755", "qty": 29, "revenue": 4650565.72657029, "cogs": 1396292.0, "ten_pl": "Da dầu 200ml", "phan_loai": "Gel rửa mặt Actidem", "ten_sp": "GEL RỬA MẶT ACTIDEM TRẮNG HỒNG XANH DERMA/SENSITIVE/PURIFYING GEL CLEANSER 30/150/180ml - Từ Hảo", "LN_GV": 3254273.7265702896, "margin_gv": 69.97586783856207, "orders": 28}, {"SKU phân loại hàng": "8938557673069", "qty": 27, "revenue": 4265997.0, "cogs": 1375002.0, "ten_pl": "Mọi loại da 500ml", "phan_loai": "Nước Tẩy Trang Actidem", "ten_sp": "Nước Tẩy Trang Actidem Derma Cleansing Water 500ml - Từ Hảo", "LN_GV": 2890995.0, "margin_gv": 67.76833176394639, "orders": 24}, {"SKU phân loại hàng": "8809418755333", "qty": 6, "revenue": 2950527.0, "cogs": 1981542.0, "ten_pl": "60ml", "phan_loai": "Serum Angel's Liquid", "ten_sp": "Serum dưỡng trắng Angel's Liquid 7Day Whitening Program Glutathione 700 V-Ample cấp ẩm30ml", "LN_GV": 968985.0, "margin_gv": 32.8410822880116, "orders": 6}, {"SKU phân loại hàng": "8809418752585", "qty": 9, "revenue": 2605096.0, "cogs": 1737000.0, "ten_pl": "-", "phan_loai": "Toner Angel's Liquid", "ten_sp": "Toner Dưỡng Angel's Liquid 7 Day Esscense Glutathione Sáng Da, Mờ Thâm Nám 150ml", "LN_GV": 868096.0, "margin_gv": 33.32299462284691, "orders": 9}, {"SKU phân loại hàng": "8938557673212", "qty": 18, "revenue": 2149350.0, "cogs": 500004.0, "ten_pl": "Refill da khô 200ml", "phan_loai": "Gel rửa mặt Actidem", "ten_sp": "GEL RỬA MẶT ACTIDEM TRẮNG HỒNG XANH DERMA/SENSITIVE/PURIFYING GEL CLEANSER 30/150/180ml - Từ Hảo", "LN_GV": 1649346.0, "margin_gv": 76.73696699002024, "orders": 18}, {"SKU phân loại hàng": "BG-5999566330643", "qty": 6, "revenue": 2035650.0, "cogs": 1750080.0, "ten_pl": "Power Peptides", "phan_loai": "Serum Geek & Gorgeous", "ten_sp": "Serum Làm sáng Đều Màu Da Cấp Nước Giảm Mụn Geek & Gorgeous - Từ Hảo", "LN_GV": 285570.0, "margin_gv": 14.028443003463268, "orders": 6}, {"SKU phân loại hàng": "8936205621387", "qty": 12, "revenue": 1776503.8752327748, "cogs": 2244000.0, "ten_pl": "-", "phan_loai": "Sữa rửa mặt DrCeutics", "ten_sp": "DrCeutics Sữa Rửa Mặt Tạo Bọt Gentle Olive Foaming Facial Wash - Cho Mọi Loại Da, Da Nhạy Cảm 420g - Từ Hảo", "LN_GV": -467496.12476722524, "margin_gv": -26.315513930751735, "orders": 12}, {"SKU phân loại hàng": "8809694625719", "qty": 15, "revenue": 1692634.0, "cogs": 1620000.0, "ten_pl": "#Aqua", "phan_loai": "KCN Dermablock", "ten_sp": "Kem Chống Nắng Dermablock SPF50+ PA++++ Nâng Tone, Bảo Vệ Da Toàn Diện 35ml - Từ Hảo", "LN_GV": 72634.0, "margin_gv": 4.29118167306104, "orders": 15}, {"SKU phân loại hàng": "8938557673113", "qty": 10, "revenue": 1667350.0, "cogs": 481323.9767216295, "ten_pl": "Nhạy cảm/ Khô 200ml", "phan_loai": "Gel rửa mặt Actidem", "ten_sp": "GEL RỬA MẶT ACTIDEM TRẮNG HỒNG XANH DERMA/SENSITIVE/PURIFYING GEL CLEANSER 30/150/180ml - Từ Hảo", "LN_GV": 1186026.0232783705, "margin_gv": 71.13239711388553, "orders": 10}, {"SKU phân loại hàng": "329468002806", "qty": 96, "revenue": 1492611.2488703134, "cogs": 1152000.0, "ten_pl": "Cotton 80 miếng", "phan_loai": "BTT Ceiba", "ten_sp": "Bông Tẩy Trang Làm Sạch Da Ceiba 80miếng/120miếng", "LN_GV": 340611.2488703134, "margin_gv": 22.81982325458862, "orders": 51}, {"SKU phân loại hàng": "8809418755425", "qty": 3, "revenue": 1324756.0, "cogs": 0.0, "ten_pl": "Kem dưỡng 50ml", "phan_loai": "Kem dưỡng Angel's Liquid", "ten_sp": "Toner - Serum - Kem Dưỡng Giảm Thâm Nám Chuyên Biệt Angel's Liquid Tranexamic Acid Mela Zero - TỪ HẢO", "LN_GV": 1324756.0, "margin_gv": 100.0, "orders": 3}, {"SKU phân loại hàng": "8938557673137", "qty": 7, "revenue": 1319850.0, "cogs": 337036.0, "ten_pl": "Da dầu 200ml", "phan_loai": "Gel rửa mặt Actidem", "ten_sp": "GEL RỬA MẶT ACTIDEM TRẮNG HỒNG XANH DERMA/SENSITIVE/PURIFYING GEL CLEANSER 30/150/200ml - Từ Hảo", "LN_GV": 982814.0, "margin_gv": 74.46406788650225, "orders": 7}, {"SKU phân loại hàng": "8809418756897", "qty": 4, "revenue": 1225302.0, "cogs": 1321200.0, "ten_pl": "-", "phan_loai": "Nước thần Angel's Liquid", "ten_sp": "Nước Thần Làm Trắng, Kiểm Soát Dầu Angel's Liquid Glutathione Plus Niacinamide Cica Essence 150ml - Từ Hảo", "LN_GV": -95898.0, "margin_gv": -7.826478696680492, "orders": 4}, {"SKU phân loại hàng": "3614819997108", "qty": 5, "revenue": 1158040.0, "cogs": 748370.0, "ten_pl": "Xanh nhạy cảm", "phan_loai": "Lăn khử mùi Etiaxil", "ten_sp": "Lăn khử mùi Etiaxil Dành Cho Da Nhạy Cảm 15ml - Từ Hảo", "LN_GV": 409670.0, "margin_gv": 35.37615280992021, "orders": 4}, {"SKU phân loại hàng": "8938557673144", "qty": 6, "revenue": 788300.0, "cogs": 188892.0, "ten_pl": "-", "phan_loai": "Kem mụn Inolab", "ten_sp": "Kem chấm mụn Inolab Derma FAC Spot Cream 10g", "LN_GV": 599408.0, "margin_gv": 76.03805657744513, "orders": 6}, {"SKU phân loại hàng": "8938557673175", "qty": 4, "revenue": 785843.4915254237, "cogs": 233336.0, "ten_pl": "-", "phan_loai": "Kem dưỡng Actidem", "ten_sp": "Kem Dưỡng Hỗ Trợ Làm Dịu Da Mụn Actidem AC Clarify Cream 50g - Từ Hảo", "LN_GV": 552507.4915254237, "margin_gv": 70.30757364331355, "orders": 4}, {"SKU phân loại hàng": "4607087858775", "qty": 11, "revenue": 698399.0373831776, "cogs": 385000.0, "ten_pl": "Hồng - 3in1", "phan_loai": "Sữa Rửa Mặt Compliment", "ten_sp": "Sữa Rửa Mặt Compliment No Problem ngăn ngừa mụn sạch sâu 200ml", "LN_GV": 313399.03738317755, "margin_gv": 44.8739217278203, "orders": 10}, {"SKU phân loại hàng": "8936221250868", "qty": 10, "revenue": 673199.0, "cogs": 480000.0, "ten_pl": "200 tờ", "phan_loai": "Khăn mặt Từ Hảo", "ten_sp": "Khăn mặt đa năng Từ Hảo 80/200 tờ - Soft Facial Towel Nhà Tắm", "LN_GV": 193199.0, "margin_gv": 28.698646314091373, "orders": 5}, {"SKU phân loại hàng": "8938557673380", "qty": 3, "revenue": 612700.0, "cogs": 241668.0, "ten_pl": "-", "phan_loai": "Nước Tẩy Trang Actidem", "ten_sp": "Nước Tẩy Trang Dành Cho Da Dầu Mụn Actidem Derma Purifying Cleasing Water 500ml", "LN_GV": 371032.0, "margin_gv": 60.556879386322834, "orders": 3}, {"SKU phân loại hàng": "BG-5999566330360", "qty": 2, "revenue": 594000.0, "cogs": 388000.0, "ten_pl": "Porefectly Clear", "phan_loai": "Serum Geek & Gorgeous", "ten_sp": "Serum Làm sáng Đều Màu Da Cấp Nước Giảm Mụn Geek & Gorgeous - Từ Hảo", "LN_GV": 206000.0, "margin_gv": 34.68013468013468, "orders": 2}, {"SKU phân loại hàng": "8938557673182", "qty": 2, "revenue": 528840.0, "cogs": 157286.0, "ten_pl": "-", "phan_loai": "Dầu tẩy trang Inolab", "ten_sp": "Dầu tẩy trang hệ vi nhũ làm sạch sâu Inolab Derma Depure Oil 110ml - Từ Hảo", "LN_GV": 371554.0, "margin_gv": 70.25830118750473, "orders": 2}, {"SKU phân loại hàng": "3401360044951", "qty": 4, "revenue": 527577.0787312832, "cogs": 632472.0, "ten_pl": "Lăn 48h Tươi Mát", "phan_loai": "Lăn khử mùi Etiaxil", "ten_sp": "Lăn khử mùi Etiaxil Dành Cho Da Nhạy Cảm 15ml - Từ Hảo", "LN_GV": -104894.9212687168, "margin_gv": -19.88238790073443, "orders": 4}, {"SKU phân loại hàng": "BG-599956633014", "qty": 1, "revenue": 302050.0, "cogs": 242000.0, "ten_pl": "aPAD", "phan_loai": "Serum Geek & Gorgeous", "ten_sp": "Serum Làm sáng Đều Màu Da Cấp Nước Giảm Mụn Geek & Gorgeous - Từ Hảo", "LN_GV": 60050.0, "margin_gv": 19.88081443469624, "orders": 1}, {"SKU phân loại hàng": "BG-8809192000353", "qty": 1, "revenue": 288000.0, "cogs": 207771.0, "ten_pl": "Ampoule - 400ml", "phan_loai": "Nước Hoa Hồng Badskin", "ten_sp": "Nước Hoa Hồng Badskin Spa Toner/ Collagen Bomb 500/400/100ml - Từ Hảo", "LN_GV": 80229.0, "margin_gv": 27.85729166666667, "orders": 1}, {"SKU phân loại hàng": "4607953914994", "qty": 2, "revenue": 198840.0, "cogs": 70000.0, "ten_pl": "Xanh lá - BHA-ZinC", "phan_loai": "Sữa Rửa Mặt Compliment", "ten_sp": "Sữa Rửa Mặt Compliment No Problem ngăn ngừa mụn sạch sâu 200ml", "LN_GV": 128840.0, "margin_gv": 64.7958157312412, "orders": 2}, {"SKU phân loại hàng": "8809694625733", "qty": 2, "revenue": 166200.0, "cogs": 216000.0, "ten_pl": "#Mild Stick", "phan_loai": "KCN Dermablock", "ten_sp": "Kem Chống Nắng Dermablock SPF50+ PA++++ Nâng Tone, Bảo Vệ Da Toàn Diện 35ml - Từ Hảo", "LN_GV": -49800.0, "margin_gv": -29.96389891696751, "orders": 2}, {"SKU phân loại hàng": "BG-8809192000193", "qty": 1, "revenue": 164560.0, "cogs": 129667.0, "ten_pl": "Ampoule - 100ml", "phan_loai": "Nước Hoa Hồng Badskin", "ten_sp": "Nước Hoa Hồng Badskin Spa Toner/ Collagen Bomb 500/400/100ml - Từ Hảo", "LN_GV": 34893.0, "margin_gv": 21.203816237238698, "orders": 1}, {"SKU phân loại hàng": "8936221250875", "qty": 4, "revenue": 153000.0, "cogs": 83380.0, "ten_pl": "80 tờ", "phan_loai": "Khăn mặt Từ Hảo", "ten_sp": "Khăn mặt đa năng Từ Hảo 80/200 tờ - Soft Facial Towel Nhà Tắm", "LN_GV": 69620.0, "margin_gv": 45.50326797385621, "orders": 2}, {"SKU phân loại hàng": "3614819997115", "qty": 1, "revenue": 140410.9212687168, "cogs": 150000.0, "ten_pl": "Nâu Rất Nhạy Cảm", "phan_loai": "Lăn khử mùi Etiaxil", "ten_sp": "Lăn khử mùi Etiaxil Dành Cho Da Nhạy Cảm 15ml - Từ Hảo", "LN_GV": -9589.078731283196, "margin_gv": -6.829296926933289, "orders": 1}, {"SKU phân loại hàng": "8809544631297", "qty": 1, "revenue": 25020.06993006993, "cogs": 16000.0, "ten_pl": "Edel Rejuvenation", "phan_loai": "Mặt nạ Wonjin", "ten_sp": "Mặt Nạ Truyền Dịch Trẻ Hóa Da, Cấp Ẩm Đa Tầng Wonjin Derma 30ml - TỪ HẢO", "LN_GV": 9020.06993006993, "margin_gv": 36.05133780713106, "orders": 1}, {"SKU phân loại hàng": "8938546064168", "qty": 200, "revenue": 0.0, "cogs": 0.0, "ten_pl": "Mask Actidem", "phan_loai": "HÀNG TẶNG", "ten_sp": "Mặt nạ hỗ trợ phục hồi da Actidem B5 Calming & Hydrating Mask 23g / Combo mặt nạ Actidem + tẩy trang Byphasse - TỪ HẢO", "LN_GV": 0.0, "margin_gv": 0.0, "orders": 200}, {"SKU phân loại hàng": "8809495684519", "qty": 4, "revenue": 0.0, "cogs": 0.0, "ten_pl": "Bộ 3 gói mẫu thử KCN", "phan_loai": "HÀNG TẶNG", "ten_sp": "Bộ mini gói mẫu thử kem chống nắng Make Prem Sample", "LN_GV": 0.0, "margin_gv": 0.0, "orders": 4}], "category": [{"phan_loai": "Gel mụn Actidem", "qty": 1793, "revenue": 207221867.86751038, "cogs": 62145298.120000005, "n_sku": 4, "LN_GV": 145076569.74751037, "margin_gv": 70.01026061605945}, {"phan_loai": "KCN Make Prem", "qty": 491, "revenue": 132569260.7606675, "cogs": 102145488.0, "n_sku": 6, "LN_GV": 30423772.760667503, "margin_gv": 22.94934179017015}, {"phan_loai": "Serum Angel's Liquid", "qty": 91, "revenue": 28041378.24743212, "cogs": 24931542.0, "n_sku": 2, "LN_GV": 3109836.24743212, "margin_gv": 11.090169035171808}, {"phan_loai": "Tẩy trang Eveline", "qty": 203, "revenue": 25750012.425364625, "cogs": 21301196.0, "n_sku": 1, "LN_GV": 4448816.425364625, "margin_gv": 17.276948654915568}, {"phan_loai": "Gel rửa mặt Actidem", "qty": 189, "revenue": 25621769.940958913, "cogs": 7145246.9767216295, "n_sku": 6, "LN_GV": 18476522.964237284, "margin_gv": 72.11259412137937}, {"phan_loai": "Sữa Dưỡng Thể Dr Ceutics", "qty": 38, "revenue": 10625334.0, "cogs": 11172000.0, "n_sku": 1, "LN_GV": -546666.0, "margin_gv": -5.144930032317101}, {"phan_loai": "Serum Actidem", "qty": 44, "revenue": 8968433.504512437, "cogs": 3422232.0, "n_sku": 1, "LN_GV": 5546201.504512437, "margin_gv": 61.8413628391389}, {"phan_loai": "Sữa rửa mặt ISIS Pharma", "qty": 12, "revenue": 5389186.530612245, "cogs": 3660000.0, "n_sku": 1, "LN_GV": 1729186.5306122452, "margin_gv": 32.08622527333079}, {"phan_loai": "Nước Tẩy Trang Actidem", "qty": 30, "revenue": 4878697.0, "cogs": 1616670.0, "n_sku": 2, "LN_GV": 3262027.0, "margin_gv": 66.86266845430245}, {"phan_loai": "Serum Geek & Gorgeous", "qty": 9, "revenue": 2931700.0, "cogs": 2380080.0, "n_sku": 3, "LN_GV": 551620.0, "margin_gv": 18.815704198928948}, {"phan_loai": "Toner Angel's Liquid", "qty": 9, "revenue": 2605096.0, "cogs": 1737000.0, "n_sku": 1, "LN_GV": 868096.0, "margin_gv": 33.32299462284691}, {"phan_loai": "KCN Dermablock", "qty": 17, "revenue": 1858834.0, "cogs": 1836000.0, "n_sku": 2, "LN_GV": 22834.0, "margin_gv": 1.2284044729115133}, {"phan_loai": "Lăn khử mùi Etiaxil", "qty": 10, "revenue": 1826028.0, "cogs": 1530842.0, "n_sku": 3, "LN_GV": 295186.0, "margin_gv": 16.16546953277825}, {"phan_loai": "Sữa rửa mặt DrCeutics", "qty": 12, "revenue": 1776503.8752327748, "cogs": 2244000.0, "n_sku": 1, "LN_GV": -467496.12476722524, "margin_gv": -26.315513930751735}, {"phan_loai": "BTT Ceiba", "qty": 96, "revenue": 1492611.2488703134, "cogs": 1152000.0, "n_sku": 1, "LN_GV": 340611.2488703134, "margin_gv": 22.81982325458862}, {"phan_loai": "Kem dưỡng Angel's Liquid", "qty": 3, "revenue": 1324756.0, "cogs": 0.0, "n_sku": 1, "LN_GV": 1324756.0, "margin_gv": 100.0}, {"phan_loai": "Nước thần Angel's Liquid", "qty": 4, "revenue": 1225302.0, "cogs": 1321200.0, "n_sku": 1, "LN_GV": -95898.0, "margin_gv": -7.826478696680492}, {"phan_loai": "Sữa Rửa Mặt Compliment", "qty": 13, "revenue": 897239.0373831776, "cogs": 455000.0, "n_sku": 2, "LN_GV": 442239.03738317755, "margin_gv": 49.28887609181383}, {"phan_loai": "Khăn mặt Từ Hảo", "qty": 14, "revenue": 826199.0, "cogs": 563380.0, "n_sku": 2, "LN_GV": 262819.0, "margin_gv": 31.810617054728947}, {"phan_loai": "Kem mụn Inolab", "qty": 6, "revenue": 788300.0, "cogs": 188892.0, "n_sku": 1, "LN_GV": 599408.0, "margin_gv": 76.03805657744513}, {"phan_loai": "Kem dưỡng Actidem", "qty": 4, "revenue": 785843.4915254237, "cogs": 233336.0, "n_sku": 1, "LN_GV": 552507.4915254237, "margin_gv": 70.30757364331355}, {"phan_loai": "Dầu tẩy trang Inolab", "qty": 2, "revenue": 528840.0, "cogs": 157286.0, "n_sku": 1, "LN_GV": 371554.0, "margin_gv": 70.25830118750473}, {"phan_loai": "Nước Hoa Hồng Badskin", "qty": 2, "revenue": 452560.0, "cogs": 337438.0, "n_sku": 2, "LN_GV": 115122.0, "margin_gv": 25.43795297861057}, {"phan_loai": "Mặt nạ Wonjin", "qty": 1, "revenue": 25020.06993006993, "cogs": 16000.0, "n_sku": 1, "LN_GV": 9020.06993006993, "margin_gv": 36.05133780713106}, {"phan_loai": "HÀNG TẶNG", "qty": 204, "revenue": 0.0, "cogs": 0.0, "n_sku": 2, "LN_GV": 0.0, "margin_gv": 0.0}], "cancel_reasons": [{"ly_do": "Hủy bởi người mua  lí do là: Lý do khác", "so_don": 119}, {"ly_do": "Hủy bởi người mua  lí do là: Thay đổi đơn hàng", "so_don": 107}, {"ly_do": "Hủy bởi người mua  lí do là: Need to change delivery address", "so_don": 71}, {"ly_do": "Hủy bởi người mua  lí do là: Muốn nhập/thay đổi mã Voucher", "so_don": 56}, {"ly_do": "Tự động hủy bởi hệ thống Shopee  lí do là: Giao hàng thất bại", "so_don": 52}, {"ly_do": "Hủy bởi người mua  lí do là: Muốn thay đổi địa chỉ giao hàng", "so_don": 52}, {"ly_do": "Hủy bởi người mua  lí do là: Muốn thay đổi sản phẩm trong đơn hàng", "so_don": 47}, {"ly_do": "Tự động hủy bởi hệ thống Shopee  lí do là: Chưa được Thanh Toán", "so_don": 34}, {"ly_do": "Hủy bởi người mua  lí do là: Tìm thấy giá rẻ hơn ở chỗ khác", "so_don": 32}, {"ly_do": "Hủy bởi người mua  lí do là: Đổi ý, không muốn mua nữa", "so_don": 27}], "ads_campaigns": [{"Tên Dịch vụ Hiển thị": "Chiến Dịch Nhóm 22/04/2026 - 1", "Trạng thái": "Đang diễn ra", "Loại Dịch vụ Hiển thị": "Dịch vụ Hiển thị Sản phẩm", "Số lượt xem": 116315, "Số lượt click": 6271, "Tỷ Lệ Click": 0.0539, "Lượt chuyển đổi": 230, "Tỷ lệ chuyển đổi": 0.0367, "Doanh số": 87453200, "Chi phí": 12367242, "ROAS": 7.07, "ACOS": 0.1414}, {"Tên Dịch vụ Hiển thị": "Gel giảm mụn, mờ thâm Actidem Derma Gel 18g/ Derma Gel 40g/ Derma Extra 18g - Từ Hảo [2]", "Trạng thái": "Đang diễn ra", "Loại Dịch vụ Hiển thị": "Dịch vụ Hiển thị Sản phẩm", "Số lượt xem": 819004, "Số lượt click": 30623, "Tỷ Lệ Click": 0.0374, "Lượt chuyển đổi": 2341, "Tỷ lệ chuyển đổi": 0.0764, "Doanh số": 318813200, "Chi phí": 70873668, "ROAS": 4.5, "ACOS": 0.2223}, {"Tên Dịch vụ Hiển thị": "Kem Chống Nắng Vật Lý Make Prem UV Sun Cream Make P:rem SPF 50+ PA++++ 70ml [3]", "Trạng thái": "Đang diễn ra", "Loại Dịch vụ Hiển thị": "Dịch vụ Hiển thị Sản phẩm", "Số lượt xem": 162128, "Số lượt click": 6275, "Tỷ Lệ Click": 0.0387, "Lượt chuyển đổi": 452, "Tỷ lệ chuyển đổi": 0.072, "Doanh số": 164179500, "Chi phí": 20268398, "ROAS": 8.1, "ACOS": 0.1235}], "gv_master": [{"SKU phân loại": "8938557673007", "Sản phẩm": "Gel giảm mụn, mờ thâm Actidem Derma Gel 18g/ Derma Gel 40g/ Derma Extra 18g - Từ Hảo", "Tên Phân Loại": "Derma 40g-Date 8/27", "Giá vốn": 60182.12, "PHÂN LOẠI": "Gel mụn Actidem"}, {"SKU phân loại": "8938557673014", "Sản phẩm": "Gel giảm mụn, mờ thâm Actidem Derma Gel 18g/ Derma Gel 40g/ Derma Extra 18g - Từ Hảo", "Tên Phân Loại": "Derma Extra - 18g", "Giá vốn": 37037.0, "PHÂN LOẠI": "Gel mụn Actidem"}, {"SKU phân loại": "8938557673151", "Sản phẩm": "Gel giảm mụn, mờ thâm Actidem Derma Gel 18g/ Derma Gel 40g/ Derma Extra 18g - Từ Hảo", "Tên Phân Loại": "Derma Gel - 18g", "Giá vốn": 32407.0, "PHÂN LOẠI": "Gel mụn Actidem"}, {"SKU phân loại": "8938557673168", "Sản phẩm": "Gel giảm mụn, mờ thâm Actidem Derma Gel 18g/ Derma Gel 40g/ Derma Extra 18g - Từ Hảo", "Tên Phân Loại": "Derma Gel - 40g", "Giá vốn": 60182.12, "PHÂN LOẠI": "Gel mụn Actidem"}, {"SKU phân loại": "893855767301", "Sản phẩm": "Gel giảm mụn, mờ thâm Actidem Derma Gel 18g/ Derma Gel 40g/ Derma Extra 18g - Từ Hảo", "Tên Phân Loại": "Extra Gel 10g", "Giá vốn": 22222.0, "PHÂN LOẠI": "Gel mụn Actidem"}, {"SKU phân loại": "8809495682126", "Sản phẩm": "Kem Chống Nắng Vật Lý Make Prem UV Sun Cream Make P:rem SPF 50+ PA++++ 70ml", "Tên Phân Loại": "Calm Nhạy Cảm 50ml", "Giá vốn": 201872.0, "PHÂN LOẠI": "KCN Make Prem"}, {"SKU phân loại": "8809495682102", "Sản phẩm": "Kem Chống Nắng Vật Lý Make Prem UV Sun Cream Make P:rem SPF 50+ PA++++ 70ml", "Tên Phân Loại": "Tone Up 50ml", "Giá vốn": 214844.0, "PHÂN LOẠI": "KCN Make Prem"}, {"SKU phân loại": "8809495682119", "Sản phẩm": "Kem Chống Nắng Vật Lý Make Prem UV Sun Cream Make P:rem SPF 50+ PA++++ 70ml", "Tên Phân Loại": "Sữa vật lý lai 150ml", "Giá vốn": 270560.0, "PHÂN LOẠI": "KCN Make Prem"}, {"SKU phân loại": "8809495683321", "Sản phẩm": "Kem Chống Nắng Vật Lý Make Prem UV Sun Cream Make P:rem SPF 50+ PA++++ 70ml", "Tên Phân Loại": "Watery Nhẹ Mặt 50ml", "Giá vốn": 198876.0, "PHÂN LOẠI": "KCN Make Prem"}, {"SKU phân loại": "8809495683338", "Sản phẩm": "Kem Chống Nắng Vật Lý Make Prem UV Sun Cream Make P:rem SPF 50+ PA++++ 70ml", "Tên Phân Loại": "NSebum Kiềm Dầu 50ml", "Giá vốn": 204444.0, "PHÂN LOẠI": "KCN Make Prem"}, {"SKU phân loại": "8809495684045", "Sản phẩm": "Kem Chống Nắng Vật Lý Make Prem UV Sun Cream Make P:rem SPF 50+ PA++++ 70ml", "Tên Phân Loại": "Tone Up New 50ml", "Giá vốn": 214844.0, "PHÂN LOẠI": "KCN Make Prem"}, {"SKU phân loại": "8809418751717", "Sản phẩm": "Serum dưỡng trắng Angel's Liquid 7Day Whitening Program Glutathione 700 V-Ample cấp ẩm 30ml", "Tên Phân Loại": "30ml", "Giá vốn": 270000.0, "PHÂN LOẠI": "Serum Angel's Liquid"}, {"SKU phân loại": "8809418755333", "Sản phẩm": "Serum dưỡng trắng Angel's Liquid 7Day Whitening Program Glutathione 700 V-Ample cấp ẩm 30ml", "Tên Phân Loại": "60ml", "Giá vốn": 330257.0, "PHÂN LOẠI": "Serum Angel's Liquid"}, {"SKU phân loại": "8938557673267", "Sản phẩm": "GEL RỬA MẶT ACTIDEM TRẮNG HỒNG XANH DERMA/SENSITIVE/PURIFYING GEL CLEANSER 30/150/200ml - Từ Hảo", "Tên Phân Loại": "Sạch sâu 150ml", "Giá vốn": 41667.0, "PHÂN LOẠI": "Gel rửa mặt Actidem"}, {"SKU phân loại": "8938557673137", "Sản phẩm": "GEL RỬA MẶT ACTIDEM TRẮNG HỒNG XANH DERMA/SENSITIVE/PURIFYING GEL CLEANSER 30/150/200ml - Từ Hảo", "Tên Phân Loại": "Da dầu 200ml", "Giá vốn": 48148.0, "PHÂN LOẠI": "Gel rửa mặt Actidem"}, {"SKU phân loại": "261755", "Sản phẩm": "GEL RỬA MẶT ACTIDEM TRẮNG HỒNG XANH DERMA/SENSITIVE/PURIFYING GEL CLEANSER 30/150/200ml - Từ Hảo", "Tên Phân Loại": "Da dầu 200ml", "Giá vốn": 48148.0, "PHÂN LOẠI": "Gel rửa mặt Actidem"}, {"SKU phân loại": "8938557673113", "Sản phẩm": "GEL RỬA MẶT ACTIDEM TRẮNG HỒNG XANH DERMA/SENSITIVE/PURIFYING GEL CLEANSER 30/150/200ml - Từ Hảo", "Tên Phân Loại": "Nhạy cảm/ Khô 200ml", "Giá vốn": 48132.39767216295, "PHÂN LOẠI": "Gel rửa mặt Actidem"}, {"SKU phân loại": "8938557673205", "Sản phẩm": "GEL RỬA MẶT ACTIDEM TRẮNG HỒNG XANH DERMA/SENSITIVE/PURIFYING GEL CLEANSER 30/150/200ml - Từ Hảo", "Tên Phân Loại": "Refill da dầu 200ml", "Giá vốn": 27778.0, "PHÂN LOẠI": "Gel rửa mặt Actidem"}, {"SKU phân loại": "8938557673212", "Sản phẩm": "GEL RỬA MẶT ACTIDEM TRẮNG HỒNG XANH DERMA/SENSITIVE/PURIFYING GEL CLEANSER 30/150/200ml - Từ Hảo", "Tên Phân Loại": "Refill da khô 200ml", "Giá vốn": 27778.0, "PHÂN LOẠI": "Gel rửa mặt Actidem"}, {"SKU phân loại": "590176988314", "Sản phẩm": "Tẩy trang Eveline dịu nhẹ dành cho da nhạy cảm, da bị kích ứng 100ml/400ml/500ml - Từ Hảo", "Tên Phân Loại": "B5 Xanh,500ml", "Giá vốn": 104932.0, "PHÂN LOẠI": "Tẩy trang Eveline"}, {"SKU phân loại": "8938557673229", "Sản phẩm": "Tinh chất hỗ trợ giảm mụn và kiểm soát dầu Actidem Derma ZNP Serum 30ml", "Tên Phân Loại": "-", "Giá vốn": 77778.0, "PHÂN LOẠI": "Serum Actidem"}, {"SKU phân loại": "8936205621318", "Sản phẩm": "Sữa Dưỡng Thể Dr Ceutics Niacinamide 10% + Alpha-Arbutin 2% Drceutics Body Lotion 200g - Từ Hảo", "Tên Phân Loại": "-", "Giá vốn": 294000.0, "PHÂN LOẠI": "Sữa Dưỡng Thể Dr Ceutics"}, {"SKU phân loại": "3031500311423", "Sản phẩm": "Sữa rửa mặt ISIS Pharma Teenderm Gel 150ml", "Tên Phân Loại": "150ML", "Giá vốn": 305000.0, "PHÂN LOẠI": "Sữa rửa mặt ISIS Pharma"}, {"SKU phân loại": "8938557673069", "Sản phẩm": "Nước Tẩy Trang Actidem Derma Cleansing Water/ Purifying Cleansing Water cho da dầu mụn 500ml - Từ Hảo", "Tên Phân Loại": "Mọi loại da 500ml", "Giá vốn": 50926.0, "PHÂN LOẠI": "Nước Tẩy Trang Actidem"}, {"SKU phân loại": "8938557673380", "Sản phẩm": "Nước Tẩy Trang Actidem Derma Cleansing Water/ Purifying Cleansing Water cho da dầu mụn 500ml - Từ Hảo", "Tên Phân Loại": "Da dầu mụn 500ml", "Giá vốn": 80556.0, "PHÂN LOẠI": "Nước Tẩy Trang Actidem"}, {"SKU phân loại": "BG-5999566330360", "Sản phẩm": "Serum Làm sáng Đều Màu Da Cấp Nước Giảm Mụn Geek & Gorgeous - Từ Hảo", "Tên Phân Loại": "Porefectly Clear", "Giá vốn": 194000.0, "PHÂN LOẠI": "Serum Geek & Gorgeous"}, {"SKU phân loại": "BG-599956633014", "Sản phẩm": "Serum Làm sáng Đều Màu Da Cấp Nước Giảm Mụn Geek & Gorgeous - Từ Hảo", "Tên Phân Loại": "aPAD", "Giá vốn": 242000.0, "PHÂN LOẠI": "Serum Geek & Gorgeous"}, {"SKU phân loại": "BG-5999566330643", "Sản phẩm": "Serum Làm sáng Đều Màu Da Cấp Nước Giảm Mụn Geek & Gorgeous - Từ Hảo", "Tên Phân Loại": "Power Peptides", "Giá vốn": 291680.0, "PHÂN LOẠI": "Serum Geek & Gorgeous"}, {"SKU phân loại": "8809418752585", "Sản phẩm": "Toner Dưỡng Angel's Liquid 7 Day Esscense Glutathione Sáng Da, Mờ Thâm Nám 150ml", "Tên Phân Loại": "-", "Giá vốn": 193000.0, "PHÂN LOẠI": "Toner Angel's Liquid"}, {"SKU phân loại": "8936205621387", "Sản phẩm": "DrCeutics Sữa Rửa Mặt Tạo Bọt Gentle Olive Foaming Facial Wash - Cho Mọi Loại Da, Da Nhạy Cảm 420g - Từ Hảo", "Tên Phân Loại": "-", "Giá vốn": 187000.0, "PHÂN LOẠI": "Sữa rửa mặt DrCeutics"}, {"SKU phân loại": "3614819997115", "Sản phẩm": "Lăn khử mùi Etiaxil Dành Cho Da Nhạy Cảm 15ml - Từ Hảo", "Tên Phân Loại": "Nâu Rất Nhạy Cảm", "Giá vốn": 150000.0, "PHÂN LOẠI": "Lăn khử mùi Etiaxil"}, {"SKU phân loại": "3401360044951", "Sản phẩm": "Lăn khử mùi Etiaxil Dành Cho Da Nhạy Cảm 15ml - Từ Hảo", "Tên Phân Loại": "Lăn 48h Tươi Mát", "Giá vốn": 158118.0, "PHÂN LOẠI": "Lăn khử mùi Etiaxil"}, {"SKU phân loại": "UT-3614819997108", "Sản phẩm": "Lăn khử mùi Etiaxil Dành Cho Da Nhạy Cảm 15ml - Từ Hảo", "Tên Phân Loại": "Etiaxil rách vỏ", "Giá vốn": 149674.0, "PHÂN LOẠI": "Lăn khử mùi Etiaxil"}, {"SKU phân loại": "3614819997108", "Sản phẩm": "Lăn khử mùi Etiaxil Dành Cho Da Nhạy Cảm 15ml - Từ Hảo", "Tên Phân Loại": "Xanh nhạy cảm", "Giá vốn": 149674.0, "PHÂN LOẠI": "Lăn khử mùi Etiaxil"}, {"SKU phân loại": "8809694625719", "Sản phẩm": "Kem Chống Nắng Dermablock SPF50+ PA++++ Nâng Tone, Bảo Vệ Da Toàn Diện 35ml - Từ Hảo", "Tên Phân Loại": "#Aqua", "Giá vốn": 108000.0, "PHÂN LOẠI": "KCN Dermablock"}, {"SKU phân loại": "8809694625733", "Sản phẩm": "Kem Chống Nắng Dermablock SPF50+ PA++++ Nâng Tone, Bảo Vệ Da Toàn Diện 35ml - Từ Hảo", "Tên Phân Loại": "#Mild Stick", "Giá vốn": 108000.0, "PHÂN LOẠI": "KCN Dermablock"}, {"SKU phân loại": "8809418756897", "Sản phẩm": "Nước Thần Làm Trắng, Kiểm Soát Dầu Angel's Liquid Glutathione Plus Niacinamide Cica Essence 150ml - Từ Hảo", "Tên Phân Loại": "-", "Giá vốn": 330300.0, "PHÂN LOẠI": "Nước thần Angel's Liquid"}, {"SKU phân loại": "329468002806", "Sản phẩm": "Bông Tẩy Trang Làm Sạch Da Ceiba 80miếng/120miếng", "Tên Phân Loại": "Cotton 80 miếng", "Giá vốn": 12000.0, "PHÂN LOẠI": "BTT Ceiba"}, {"SKU phân loại": "8809418755425", "Sản phẩm": "Toner - Serum - Kem Dưỡng Giảm Thâm Nám Chuyên Biệt Angel's Liquid Tranexamic Acid Mela Zero - TỪ HẢO", "Tên Phân Loại": "Kem dưỡng 50ml", "Giá vốn": null, "PHÂN LOẠI": "Kem dưỡng Angel's Liquid"}, {"SKU phân loại": "8938557673182", "Sản phẩm": "Dầu tẩy trang hệ vi nhũ làm sạch sâu Inolab Derma Depure Oil 110ml - Từ Hảo", "Tên Phân Loại": "-", "Giá vốn": 78643.0, "PHÂN LOẠI": "Dầu tẩy trang Inolab"}, {"SKU phân loại": "4607087858775", "Sản phẩm": "Sữa Rửa Mặt Compliment No Problem sạch sâu 200ml", "Tên Phân Loại": "Hồng - 3in1", "Giá vốn": 35000.0, "PHÂN LOẠI": "Sữa Rửa Mặt Compliment"}, {"SKU phân loại": "4607953914994", "Sản phẩm": "Sữa Rửa Mặt Compliment No Problem sạch sâu 200ml", "Tên Phân Loại": "Xanh lá - BHA-ZinC", "Giá vốn": 35000.0, "PHÂN LOẠI": "Sữa Rửa Mặt Compliment"}, {"SKU phân loại": "8936221250868", "Sản phẩm": "Khăn mặt đa năng Từ Hảo 80/200 tờ - Soft Facial Towel Nhà Tắm", "Tên Phân Loại": "200 tờ", "Giá vốn": 48000.0, "PHÂN LOẠI": "Khăn mặt Từ Hảo"}, {"SKU phân loại": "8936221250875", "Sản phẩm": "Khăn mặt đa năng Từ Hảo 80/200 tờ - Soft Facial Towel Nhà Tắm", "Tên Phân Loại": "80 tờ", "Giá vốn": 20845.0, "PHÂN LOẠI": "Khăn mặt Từ Hảo"}, {"SKU phân loại": "8809418754411", "Sản phẩm": "Siêu Tinh Chất Tranexamic Acid Mờ Nám Chuyên Sâu Angel's Liquid Mela Ampoule 30ml - Từ Hảo", "Tên Phân Loại": "-", "Giá vốn": 330000.0, "PHÂN LOẠI": "Tinh Chất Tranexamic Acid Mờ Nám"}, {"SKU phân loại": "8938557673175", "Sản phẩm": "Kem Dưỡng Hỗ Trợ Làm Dịu Da Mụn Actidem AC Clarify Cream 50g - Từ Hảo", "Tên Phân Loại": "-", "Giá vốn": 58334.0, "PHÂN LOẠI": "Kem dưỡng Actidem"}, {"SKU phân loại": "8938557673144", "Sản phẩm": "Kem chấm mụn Inolab Derma FAC Spot Cream 10g", "Tên Phân Loại": "-", "Giá vốn": 31482.0, "PHÂN LOẠI": "Kem mụn Inolab"}, {"SKU phân loại": "8938557673380", "Sản phẩm": "Nước Tẩy Trang Dành Cho Da Dầu Mụn Actidem Derma Purifying Cleasing Water 500ml", "Tên Phân Loại": "-", "Giá vốn": 80556.0, "PHÂN LOẠI": "Nước Tẩy Trang Actidem"}, {"SKU phân loại": "BG-8809192000193", "Sản phẩm": "Nước Hoa Hồng Badskin Spa Toner/ Collagen Bomb 500/400/100ml - Từ Hảo", "Tên Phân Loại": "Ampoule - 100ml", "Giá vốn": 129667.0, "PHÂN LOẠI": "Nước Hoa Hồng Badskin"}, {"SKU phân loại": "BG-8809192000353", "Sản phẩm": "Nước Hoa Hồng Badskin Spa Toner/ Collagen Bomb 500/400/100ml - Từ Hảo", "Tên Phân Loại": "Ampoule - 400ml", "Giá vốn": 207771.0, "PHÂN LOẠI": "Nước Hoa Hồng Badskin"}, {"SKU phân loại": "8809495683031", "Sản phẩm": "Sữa rửa mặt Make P:rem Safe Me làm sạch dịu nhẹ Make Prem Cleansing 50/100ml - Từ Hảo", "Tên Phân Loại": "100ml", "Giá vốn": 70000.0, "PHÂN LOẠI": "Sữa rửa mặt Make Prem"}, {"SKU phân loại": "8938546064168", "Sản phẩm": "Mặt nạ hỗ trợ phục hồi da Actidem B5 Calming & Hydrating Mask 23g - TỪ HẢO", "Tên Phân Loại": "Mask Actidem", "Giá vốn": null, "PHÂN LOẠI": "Mặt nạ Actidem"}, {"SKU phân loại": "8809544631297", "Sản phẩm": "Mặt Nạ Truyền Dịch Trẻ Hóa Da, Cấp Ẩm Đa Tầng Wonjin Derma 30ml - TỪ HẢO", "Tên Phân Loại": "Edel Rejuvenation", "Giá vốn": 16000.0, "PHÂN LOẠI": "Mặt nạ Wonjin"}, {"SKU phân loại": "8938557673106", "Sản phẩm": "Gel rửa mặt Actidem Derma/Sensitive/Purifying Gel Cleanser 20/30ml - Từ Hảo", "Tên Phân Loại": "Sensitive - 20ml", "Giá vốn": 12000.0, "PHÂN LOẠI": "Gel rửa mặt Actidem"}, {"SKU phân loại": "8938557673120", "Sản phẩm": "Gel rửa mặt Actidem Derma/Sensitive/Purifying Gel Cleanser 20/30ml - Từ Hảo", "Tên Phân Loại": "Purifying - 20ml", "Giá vốn": 12000.0, "PHÂN LOẠI": "Gel rửa mặt Actidem"}, {"SKU phân loại": "8809495684519", "Sản phẩm": "[QUÀ TẶNG KHÔNG BÁN] Bộ mini gói mẫu thử kem chống nắng Make Prem Sample", "Tên Phân Loại": "Bộ 3 gói mẫu thử KCN", "Giá vốn": null, "PHÂN LOẠI": "HÀNG TẶNG"}]};</script>
+<script>
+// ====== Utilities ======
+const fmt = n => {
+  if (n === null || n === undefined || isNaN(n)) return '—';
+  const abs = Math.abs(n);
+  if (abs >= 1e9) return (n/1e9).toFixed(2).replace(/\.?0+$/,'') + ' tỷ';
+  if (abs >= 1e6) return (n/1e6).toFixed(1).replace(/\.?0+$/,'') + ' tr';
+  if (abs >= 1e3) return (n/1e3).toFixed(0) + 'k';
+  return Math.round(n).toLocaleString('vi-VN');
+};
+const fmtFull = n => (n===null||n===undefined||isNaN(n)) ? '—' : Math.round(n).toLocaleString('vi-VN');
+const fmtPct = (n, d=1) => (n===null||n===undefined||isNaN(n)) ? '—' : n.toFixed(d) + '%';
+const fmtNum = n => (n===null||n===undefined||isNaN(n)) ? '—' : Math.round(n).toLocaleString('vi-VN');
+const fmtShort = d => d.slice(5).replace('-','/'); // 04/01
+
+const data = DASH_DATA;
+const colors = {
+  brand:'#f97316', brand2:'#fb923c',
+  good:'#22c55e', warn:'#eab308', bad:'#ef4444', info:'#3b82f6',
+  purple:'#a855f7', teal:'#14b8a6', pink:'#ec4899', sky:'#0ea5e9',
+  grid:'rgba(148,163,184,.15)', text:'#e2e8f0'
+};
+
+Chart.defaults.color = colors.text;
+Chart.defaults.borderColor = colors.grid;
+Chart.defaults.font.family = "'Segoe UI','Inter',system-ui,Arial,sans-serif";
+
+// ====== Tabs ======
+document.querySelectorAll('.tab').forEach(t=>{
+  t.onclick = () => {
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById(t.dataset.page).classList.add('active');
+  };
+});
+
+// ====== RENDER OVERVIEW ======
+function renderOverview(){
+  const k = data.kpi;
+  document.getElementById('kpi-dt').textContent = fmt(k.DT);
+  document.getElementById('kpi-dt-sub').textContent = fmtFull(k.DT) + ' VND • gồm cả đơn hủy';
+  document.getElementById('kpi-dt-ok').textContent = fmt(k.DT_ok);
+  document.getElementById('kpi-dt-ok-sub').textContent = 'Thực thu (không tính đơn hủy)';
+  document.getElementById('kpi-ln-sau').textContent = fmt(k.LN_sau_GV);
+  document.getElementById('kpi-margin').textContent = 'Biên: ' + fmtPct(k.margin) + ' / DT all đơn';
+  document.getElementById('kpi-ln-truoc').textContent = fmt(k.LN_truoc_GV);
+  document.getElementById('kpi-aov').textContent = fmtFull(k.AOV) + ' đ';
+  document.getElementById('kpi-orders').textContent = fmtNum(k.n_orders_total);
+  document.getElementById('kpi-orders-sub').textContent = 'HT: ' + fmtNum(k.n_orders_ok) + ' • Hủy: ' + fmtNum(k.n_orders_cancel);
+  document.getElementById('kpi-qty').textContent = fmtNum(k.qty_sold);
+  document.getElementById('kpi-qty-sub').textContent = '+ ' + fmtNum(k.qty_gift) + ' sp tặng kèm';
+  document.getElementById('kpi-cancel').textContent = fmtNum(k.n_orders_cancel);
+  document.getElementById('kpi-cancel-rate').textContent = 'Tỷ lệ: ' + fmtPct(k.cancel_rate, 2);
+  document.getElementById('kpi-dt-cancel').textContent = fmt(k.DT_cancel);
+  document.getElementById('kpi-dt-cancel-sub').textContent = fmtPct(k.DT_cancel/k.DT*100) + ' / DT';
+  document.getElementById('kpi-cogs').textContent = fmt(k.cogs);
+  document.getElementById('kpi-cogs-sub').textContent = fmtPct(k.cogs/k.DT*100) + ' / DT';
+  document.getElementById('kpi-ads').textContent = fmt(k.chi_ads);
+  document.getElementById('kpi-ads-sub').textContent = fmtPct(k.chi_ads/k.DT*100) + ' / DT';
+  document.getElementById('kpi-roas').textContent = (k.DT/k.chi_ads).toFixed(2) + 'x';
+
+  // Charts
+  const labels = data.trend.map(d=>fmtShort(d.Ngày));
+  
+  new Chart(document.getElementById('ch-rev-day'), {
+    type:'bar',
+    data:{labels, datasets:[
+      {label:'Doanh thu', data:data.trend.map(d=>d.DT), backgroundColor:colors.brand+'cc', borderColor:colors.brand, borderWidth:1, yAxisID:'y'},
+      {label:'LN sau GV', type:'line', data:data.trend.map(d=>d.LN_sau_GV), borderColor:colors.good, backgroundColor:colors.good+'33', tension:.3, yAxisID:'y', pointRadius:3}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top'}},
+      scales:{y:{ticks:{callback:v=>fmt(v)}}}}
+  });
+
+  new Chart(document.getElementById('ch-orders-day'), {
+    type:'bar',
+    data:{labels, datasets:[
+      {label:'Đơn hoàn thành', data:data.trend.map(d=>d.orders_ok), backgroundColor:colors.good+'cc'},
+      {label:'Đơn hủy', data:data.trend.map(d=>d.orders_cancel), backgroundColor:colors.bad+'cc'}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top'}},
+      scales:{x:{stacked:true},y:{stacked:true}}}
+  });
+
+  new Chart(document.getElementById('ch-cancel-day'), {
+    type:'line',
+    data:{labels, datasets:[{label:'Tỷ lệ hủy (%)', data:data.trend.map(d=>d.cancel_rate),
+      borderColor:colors.bad, backgroundColor:colors.bad+'33', fill:true, tension:.3, pointRadius:3}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{y:{beginAtZero:true,ticks:{callback:v=>v+'%'}}}}
+  });
+
+  new Chart(document.getElementById('ch-dt-breakdown'), {
+    type:'doughnut',
+    data:{labels:['Giá vốn (đơn HT)','Phí sàn','Chi phí ADS','LN sau GV','DT đơn hủy (không thu)'],
+      datasets:[{data:[k.cogs, data.phi.tong_san, k.chi_ads, k.LN_sau_GV - k.DT_cancel, k.DT_cancel],
+        backgroundColor:[colors.warn, colors.info, colors.pink, colors.good, '#64748b'], borderWidth:0}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right'},
+      tooltip:{callbacks:{label:c=>c.label+': '+fmt(c.parsed)+' ('+(c.parsed/k.DT*100).toFixed(1)+'%)'}}}}
+  });
+
+  // Insights
+  const ins = [];
+  const margin_real = k.LN_sau_GV/k.DT_ok*100; // biên LN nếu tính trên DT thực thu
+  if (k.cancel_rate > 15) ins.push({type:'bad', text:`<strong>Tỷ lệ hủy ${k.cancel_rate.toFixed(2)}%</strong> ở mức cao bất thường (mục tiêu ngành mỹ phẩm <10%). Giá trị đơn hủy <strong>${fmt(k.DT_cancel)}</strong> = ${(k.DT_cancel/k.DT*100).toFixed(1)}% tổng doanh số — đây là tiền shop không thu được dù đã tốn chi phí marketing.`});
+  ins.push({type:'warn', text:`<strong>Biên LN trên DT all đơn = ${k.margin.toFixed(1)}%</strong>, nhưng nếu tính trên DT thực thu (đơn hoàn thành ${fmt(k.DT_ok)}) thì biên = ${margin_real.toFixed(1)}%. Chênh lệch ${(margin_real-k.margin).toFixed(1)} điểm % chính là "thuế hủy đơn".`});
+  if (k.DT/k.chi_ads > 5) ins.push({type:'good', text:`<strong>ROAS toàn shop ${(k.DT/k.chi_ads).toFixed(2)}x</strong> — chi 1đ ads tạo ra ${(k.DT/k.chi_ads).toFixed(1)}đ doanh số (gồm cả đơn sẽ bị hủy). Nếu chỉ tính DT thực thu thì ROAS thực = ${(k.DT_ok/k.chi_ads).toFixed(2)}x.`});
+  if (data.phi.ty_le_san_dt > 25) ins.push({type:'warn', text:`<strong>Phí sàn ${fmt(data.phi.tong_san)} (${data.phi.ty_le_san_dt.toFixed(1)}% DT all)</strong>. Phí này chỉ phát sinh trên đơn hoàn thành nên tỷ lệ "thực" = ${(data.phi.tong_san/k.DT_ok*100).toFixed(1)}% DT thực thu — đây mới là gánh nặng thực sự.`});
+  if (data.phi.ty_le_aff_dt > 5) ins.push({type:'warn', text:`<strong>Phí Affiliate ${fmt(data.phi.aff)} (${data.phi.ty_le_aff_dt.toFixed(2)}% DT all / ${(data.phi.aff/k.DT_ok*100).toFixed(2)}% DT thực)</strong> — cao hơn cả chi phí ADS. Cần kiểm tra overlap với ADS để tránh trả tiền 2 lần.`});
+  ins.push({type:'info', text:`Doanh số trung bình/ngày: <strong>${fmt(k.DT/29)}</strong>. Dự phóng đủ 30 ngày: <strong>~${fmt(k.DT/29*30)}</strong> (DT all đơn).`});
+  document.getElementById('overview-insights').innerHTML = ins.map(i=>`<div class="insight ${i.type}">${i.text}</div>`).join('');
+}
+
+// ====== RENDER COST ======
+function renderCost(){
+  const p = data.phi, k = data.kpi;
+  document.getElementById('cp-cd').textContent = fmt(p.co_dinh);
+  document.getElementById('cp-cd-sub').textContent = fmtPct(p.ty_le_co_dinh_dt) + ' / DT';
+  document.getElementById('cp-dv').textContent = fmt(p.dich_vu);
+  document.getElementById('cp-dv-sub').textContent = fmtPct(p.ty_le_dv_dt) + ' / DT';
+  document.getElementById('cp-tt').textContent = fmt(p.thanh_toan);
+  document.getElementById('cp-tt-sub').textContent = fmtPct(p.ty_le_tt_dt) + ' / DT';
+  document.getElementById('cp-vc').textContent = fmt(p.van_chuyen);
+  document.getElementById('cp-vc-sub').textContent = fmtPct(p.ty_le_vc_dt, 3) + ' / DT';
+  document.getElementById('cp-aff').textContent = fmt(p.aff);
+  document.getElementById('cp-aff-sub').textContent = fmtPct(p.ty_le_aff_dt) + ' / DT';
+  document.getElementById('cp-san').textContent = fmt(p.tong_san);
+  document.getElementById('cp-san-sub').textContent = fmtPct(p.ty_le_san_dt) + ' / DT';
+  document.getElementById('cp-ads').textContent = fmt(p.ads);
+  document.getElementById('cp-ads-sub').textContent = fmtPct(p.ty_le_ads_dt) + ' / DT';
+  document.getElementById('cp-total').textContent = fmt(p.tong_phi);
+  document.getElementById('cp-total-sub').textContent = fmtPct(p.ty_le_tong_dt) + ' / DT';
+
+  // Pie phí
+  new Chart(document.getElementById('ch-cost-pie'), {
+    type:'doughnut',
+    data:{labels:['Phí cố định','Phí dịch vụ','Phí thanh toán','Phí Aff','Phí VC trả','Chi phí ADS'],
+      datasets:[{data:[p.co_dinh,p.dich_vu,p.thanh_toan,p.aff,p.van_chuyen,p.ads],
+        backgroundColor:[colors.brand,colors.info,colors.purple,colors.sky,colors.teal,colors.pink],borderWidth:0}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right'},
+      tooltip:{callbacks:{label:c=>c.label+': '+fmt(c.parsed)+' ('+(c.parsed/p.tong_phi*100).toFixed(1)+'%)'}}}}
+  });
+
+  new Chart(document.getElementById('ch-cost-bar'), {
+    type:'bar',
+    data:{labels:['Phí cố định','Phí DV','Phí TT','Phí Aff','Phí VC trả','ADS','TỔNG'],
+      datasets:[{label:'% / DT',
+        data:[p.ty_le_co_dinh_dt,p.ty_le_dv_dt,p.ty_le_tt_dt,p.ty_le_aff_dt,p.ty_le_vc_dt,p.ty_le_ads_dt,p.ty_le_tong_dt],
+        backgroundColor:[colors.brand,colors.info,colors.purple,colors.sky,colors.teal,colors.pink,colors.bad],borderWidth:0}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{ticks:{callback:v=>v+'%'}}}}
+  });
+
+  // Chi phí theo ngày
+  const labels = data.trend.map(d=>fmtShort(d.Ngày));
+  new Chart(document.getElementById('ch-cost-day'),{
+    type:'bar',
+    data:{labels,datasets:[
+      {label:'Phí cố định', data:data.trend.map(d=>d.phi_cd), backgroundColor:colors.brand+'cc', stack:'s'},
+      {label:'Phí dịch vụ', data:data.trend.map(d=>d.phi_dv), backgroundColor:colors.info+'cc', stack:'s'},
+      {label:'Phí thanh toán', data:data.trend.map(d=>d.phi_tt), backgroundColor:colors.purple+'cc', stack:'s'},
+      {label:'Phí Aff (phân bổ)', data:data.trend.map(d=>d.phi_aff), backgroundColor:colors.sky+'cc', stack:'s'},
+      {label:'Chi phí ADS', data:data.trend.map(d=>d.ads_cost), backgroundColor:colors.pink+'cc', stack:'s'},
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top'}},
+      scales:{x:{stacked:true},y:{stacked:true,ticks:{callback:v=>fmt(v)}}}}
+  });
+
+  // Detail table
+  const rows = [
+    ['Phí cố định (hoa hồng sàn)', p.co_dinh, p.ty_le_co_dinh_dt, p.ty_le_co_dinh_dt>20?'<span class="pill bad">Cao</span>':'<span class="pill warn">TB</span>'],
+    ['Phí dịch vụ', p.dich_vu, p.ty_le_dv_dt, p.ty_le_dv_dt>5?'<span class="pill warn">TB</span>':'<span class="pill good">OK</span>'],
+    ['Phí thanh toán', p.thanh_toan, p.ty_le_tt_dt, '<span class="pill good">Bình thường</span>'],
+    ['Phí vận chuyển trả hàng', p.van_chuyen, p.ty_le_vc_dt, '<span class="pill good">Thấp</span>'],
+    ['Phí Affiliate (Tiếp thị liên kết)', p.aff, p.ty_le_aff_dt, p.ty_le_aff_dt>8?'<span class="pill bad">Cao</span>':p.ty_le_aff_dt>5?'<span class="pill warn">TB</span>':'<span class="pill good">OK</span>'],
+    ['<strong>Tổng phí sàn</strong>', p.tong_san, p.ty_le_san_dt, p.ty_le_san_dt>40?'<span class="pill bad">Rất cao</span>':p.ty_le_san_dt>30?'<span class="pill warn">Cao</span>':'<span class="pill good">OK</span>'],
+    ['Chi phí ADS', p.ads, p.ty_le_ads_dt, p.ty_le_ads_dt>15?'<span class="pill bad">Cao</span>':'<span class="pill good">Hợp lý</span>'],
+    ['<strong>TỔNG TOÀN BỘ PHÍ</strong>', p.tong_phi, p.ty_le_tong_dt, p.ty_le_tong_dt>50?'<span class="pill bad">Quá cao</span>':p.ty_le_tong_dt>40?'<span class="pill warn">Cao</span>':'<span class="pill good">OK</span>'],
+  ];
+  document.getElementById('cost-detail-table').innerHTML = rows.map(r=>
+    `<tr><td>${r[0]}</td><td class="right">${fmtFull(r[1])}</td><td class="right">${fmtPct(r[2],2)}</td><td>${r[3]}</td></tr>`).join('');
+  document.getElementById('cost-note').textContent = 'Phí Affiliate (Tiếp thị liên kết) = hoa hồng trả cho người giới thiệu/influencer thông qua chương trình Shopee Affiliate. Đây là chi phí marketing biến đổi theo doanh thu đơn có gắn link liên kết.';
+}
+
+// ====== RENDER SKU ======
+function renderSku(){
+  const top = data.sku.filter(s=>s.revenue>0).slice(0,10);
+  new Chart(document.getElementById('ch-top-sku'),{
+    type:'bar',
+    data:{labels:top.map(s=>s.ten_pl||s.SKU.slice(0,10)), datasets:[
+      {label:'Doanh thu', data:top.map(s=>s.revenue), backgroundColor:colors.brand+'cc'}
+    ]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{ticks:{callback:v=>fmt(v)}}}}
+  });
+
+  const cats = data.category.filter(c=>c.revenue>0);
+  new Chart(document.getElementById('ch-cat-pie'),{
+    type:'doughnut',
+    data:{labels:cats.map(c=>c.phan_loai), datasets:[{
+      data:cats.map(c=>c.revenue),
+      backgroundColor:[colors.brand,colors.info,colors.good,colors.purple,colors.teal,colors.pink], borderWidth:0
+    }]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right'},
+      tooltip:{callbacks:{label:c=>c.label+': '+fmt(c.parsed)}}}}
+  });
+
+  // Category table
+  const totalRev = cats.reduce((s,c)=>s+c.revenue,0);
+  document.getElementById('cat-table').innerHTML = cats.map(c=>`
+    <tr><td><strong>${c.phan_loai}</strong></td>
+    <td class="right">${c.n_sku}</td>
+    <td class="right">${fmtNum(c.qty)}</td>
+    <td class="right">${fmtFull(c.revenue)}</td>
+    <td class="right">${fmtPct(c.revenue/totalRev*100)}</td>
+    <td class="right">${fmtFull(c.cogs)}</td>
+    <td class="right"><span class="pill ${c.margin_gv>60?'good':c.margin_gv>45?'warn':'bad'}">${fmtPct(c.margin_gv)}</span></td>
+    </tr>`).join('');
+
+  // SKU table
+  document.getElementById('sku-table').innerHTML = data.sku.map(s=>{
+    if (!s.revenue && !s.qty) return '';
+    const margCls = s.margin_gv>60?'good':s.margin_gv>40?'warn':s.margin_gv>=0?'bad':'bad';
+    const tenSp = (s.ten_sp||'').length>60?(s.ten_sp.slice(0,60)+'…'):s.ten_sp||'—';
+    return `<tr><td><code style="font-size:11px">${s['SKU phân loại hàng']}</code></td>
+      <td style="font-size:12px">${s.ten_pl||tenSp}</td>
+      <td>${s.phan_loai||'—'}</td>
+      <td class="right">${fmtNum(s.qty)}</td>
+      <td class="right">${fmtNum(s.orders||0)}</td>
+      <td class="right">${fmtFull(s.revenue)}</td>
+      <td class="right">${fmtFull(s.cogs)}</td>
+      <td class="right">${fmtFull(s.LN_GV)}</td>
+      <td class="right"><span class="pill ${margCls}">${fmtPct(s.margin_gv)}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+// ====== RENDER COGS ======
+function renderCogs(){
+  const k = data.kpi;
+  document.getElementById('cogs-total').textContent = fmt(k.cogs);
+  document.getElementById('cogs-total-sub').textContent = fmtPct(k.cogs/k.DT*100) + ' / DT';
+  document.getElementById('cogs-sold').textContent = fmt(k.cogs_sold);
+  document.getElementById('cogs-gift').textContent = fmt(k.cogs_gift);
+  document.getElementById('cogs-gift-sub').textContent = fmtPct(k.cogs_gift/k.cogs*100) + ' / tổng GV — quà tặng kèm';
+  document.getElementById('cogs-margin').textContent = fmtPct((k.DT-k.cogs)/k.DT*100);
+
+  const cats = data.category.filter(c=>c.revenue>0);
+  new Chart(document.getElementById('ch-cogs-cat'),{
+    type:'bar',
+    data:{labels:cats.map(c=>c.phan_loai),datasets:[
+      {label:'Doanh thu', data:cats.map(c=>c.revenue), backgroundColor:colors.brand+'cc'},
+      {label:'Giá vốn', data:cats.map(c=>c.cogs), backgroundColor:colors.warn+'cc'}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top'}},
+      scales:{y:{ticks:{callback:v=>fmt(v)}}}}
+  });
+
+  new Chart(document.getElementById('ch-margin-cat'),{
+    type:'bar',
+    data:{labels:cats.map(c=>c.phan_loai),datasets:[{
+      label:'Biên LN gộp (%)', data:cats.map(c=>c.margin_gv),
+      backgroundColor:cats.map(c=>c.margin_gv>60?colors.good:c.margin_gv>45?colors.warn:colors.bad)
+    }]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{y:{ticks:{callback:v=>v+'%'}, beginAtZero:true}}}
+  });
+
+  document.getElementById('gv-master-table').innerHTML = data.gv_master.map(r=>`
+    <tr><td><code style="font-size:11px">${r['SKU phân loại']}</code></td>
+    <td>${r['Tên Phân Loại']}</td>
+    <td>${r['PHÂN LOẠI']}</td>
+    <td class="right">${fmtFull(r['Giá vốn'])}</td>
+    </tr>`).join('');
+}
+
+// ====== RENDER PROFIT ======
+function renderProfit(){
+  const skus = data.sku.filter(s=>s.revenue>0).slice(0,15);
+  new Chart(document.getElementById('ch-profit-sku'),{
+    type:'bar',
+    data:{labels:skus.map(s=>s.ten_pl||s['SKU phân loại hàng'].slice(0,12)),datasets:[{
+      label:'LN gộp (sau GV)', data:skus.map(s=>s.LN_GV),
+      backgroundColor:skus.map(s=>s.LN_GV>0?colors.good+'cc':colors.bad+'cc')
+    }]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{ticks:{callback:v=>fmt(v)}}}}
+  });
+
+  const skusMar = [...data.sku].filter(s=>s.revenue>1e6).sort((a,b)=>b.margin_gv-a.margin_gv);
+  new Chart(document.getElementById('ch-margin-sku'),{
+    type:'bar',
+    data:{labels:skusMar.map(s=>s.ten_pl||s['SKU phân loại hàng'].slice(0,12)),datasets:[{
+      label:'Biên LN gộp (%)', data:skusMar.map(s=>s.margin_gv),
+      backgroundColor:skusMar.map(s=>s.margin_gv>60?colors.good:s.margin_gv>40?colors.warn:colors.bad)
+    }]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{ticks:{callback:v=>v+'%'}}}}
+  });
+
+  document.getElementById('profit-table').innerHTML = data.sku.filter(s=>s.revenue!==0||s.cogs!==0).map((s,i)=>{
+    const cls = s.margin_gv>60?'good':s.margin_gv>40?'warn':'bad';
+    const label = s.margin_gv>=65?'⭐ Sao': s.margin_gv>=45?'OK':s.margin_gv>=0?'⚠️ Yếu':'❌ Lỗ';
+    return `<tr><td>${i+1}</td>
+      <td><div style="font-weight:600">${s.ten_pl||'—'}</div><div style="font-size:11px;color:var(--muted)">${s['SKU phân loại hàng']}</div></td>
+      <td>${s.phan_loai||'—'}</td>
+      <td class="right">${fmtFull(s.revenue)}</td>
+      <td class="right">${fmtFull(s.cogs)}</td>
+      <td class="right"><strong>${fmtFull(s.LN_GV)}</strong></td>
+      <td class="right"><span class="pill ${cls}">${fmtPct(s.margin_gv)}</span></td>
+      <td>${label}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ====== RENDER ADS ======
+function renderAds(){
+  const ads = data.ads_campaigns;
+  const totalCost = ads.reduce((s,a)=>s+a['Chi phí'],0);
+  const totalRev = ads.reduce((s,a)=>s+a['Doanh số'],0);
+  const totalImpr = ads.reduce((s,a)=>s+a['Số lượt xem'],0);
+  const totalClick = ads.reduce((s,a)=>s+a['Số lượt click'],0);
+  const totalOrders = ads.reduce((s,a)=>s+a['Lượt chuyển đổi'],0);
+
+  document.getElementById('ads-cost').textContent = fmt(totalCost);
+  document.getElementById('ads-cost-sub').textContent = fmtPct(totalCost/data.kpi.DT*100) + ' / DT shop';
+  document.getElementById('ads-rev').textContent = fmt(totalRev);
+  document.getElementById('ads-rev-sub').textContent = fmtPct(totalRev/data.kpi.DT*100) + ' / DT shop';
+  document.getElementById('ads-roas').textContent = (totalRev/totalCost).toFixed(2)+'x';
+  document.getElementById('ads-acos').textContent = fmtPct(totalCost/totalRev*100);
+  document.getElementById('ads-orders').textContent = fmtNum(totalOrders);
+  document.getElementById('ads-cpa').textContent = fmtFull(totalCost/totalOrders);
+  document.getElementById('ads-ctr').textContent = fmtPct(totalClick/totalImpr*100, 2);
+  document.getElementById('ads-share').textContent = fmtPct(totalRev/data.kpi.DT*100);
+
+  const labels = data.trend.map(d=>fmtShort(d.Ngày));
+  new Chart(document.getElementById('ch-ads-day'),{
+    type:'bar',
+    data:{labels,datasets:[{label:'Chi phí ADS', data:data.trend.map(d=>d.ads_cost),
+      backgroundColor:colors.pink+'cc'}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{y:{ticks:{callback:v=>fmt(v)}}}}
+  });
+  new Chart(document.getElementById('ch-roas-day'),{
+    type:'line',
+    data:{labels,datasets:[{label:'ROAS toàn shop', data:data.trend.map(d=>d.ROAS),
+      borderColor:colors.info, backgroundColor:colors.info+'33', tension:.3, fill:true, pointRadius:3}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{y:{ticks:{callback:v=>v.toFixed(1)+'x'}}}}
+  });
+
+  document.getElementById('ads-table').innerHTML = ads.map(a=>{
+    const roasCls = a.ROAS>5?'good':a.ROAS>3?'warn':'bad';
+    return `<tr>
+      <td style="font-size:12px;max-width:240px"><strong>${a['Tên Dịch vụ Hiển thị']}</strong></td>
+      <td><span class="pill ${a['Trạng thái']==='Đang diễn ra'?'good':'warn'}">${a['Trạng thái']}</span></td>
+      <td style="font-size:12px">${a['Loại Dịch vụ Hiển thị']}</td>
+      <td class="right">${fmtNum(a['Số lượt xem'])}</td>
+      <td class="right">${fmtNum(a['Số lượt click'])}</td>
+      <td class="right">${fmtPct(a['Tỷ Lệ Click']*100,2)}</td>
+      <td class="right">${fmtNum(a['Lượt chuyển đổi'])}</td>
+      <td class="right">${fmtPct(a['Tỷ lệ chuyển đổi']*100,2)}</td>
+      <td class="right">${fmtFull(a['Doanh số'])}</td>
+      <td class="right">${fmtFull(a['Chi phí'])}</td>
+      <td class="right"><span class="pill ${roasCls}">${a.ROAS.toFixed(2)}x</span></td>
+      <td class="right">${fmtPct(a.ACOS*100)}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ====== RENDER TREND ======
+function renderTrend(){
+  const labels = data.trend.map(d=>fmtShort(d.Ngày));
+
+  new Chart(document.getElementById('ch-overall'),{
+    type:'bar',
+    data:{labels,datasets:[
+      {label:'Doanh thu', data:data.trend.map(d=>d.DT), backgroundColor:colors.brand+'aa', yAxisID:'y'},
+      {label:'LN sau GV', type:'line', data:data.trend.map(d=>d.LN_sau_GV), borderColor:colors.good, backgroundColor:colors.good+'33', tension:.3, yAxisID:'y', pointRadius:3},
+      {label:'Chi phí ADS', type:'line', data:data.trend.map(d=>d.ads_cost), borderColor:colors.pink, backgroundColor:colors.pink+'33', tension:.3, yAxisID:'y', pointRadius:3, borderDash:[5,5]}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top'}},
+      scales:{y:{ticks:{callback:v=>fmt(v)}}}}
+  });
+
+  new Chart(document.getElementById('ch-margin-day'),{
+    type:'line',
+    data:{labels,datasets:[{label:'Biên LN (%)', data:data.trend.map(d=>d.margin),
+      borderColor:colors.good, backgroundColor:colors.good+'33', fill:true, tension:.3, pointRadius:3}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{y:{ticks:{callback:v=>v.toFixed(0)+'%'}}}}
+  });
+
+  new Chart(document.getElementById('ch-aov-day'),{
+    type:'line',
+    data:{labels,datasets:[{label:'AOV', data:data.trend.map(d=>d.AOV),
+      borderColor:colors.info, backgroundColor:colors.info+'33', fill:true, tension:.3, pointRadius:3}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{y:{ticks:{callback:v=>fmt(v)}}}}
+  });
+
+  // Cancel table
+  const totalCancel = data.kpi.n_orders_cancel;
+  document.getElementById('cancel-table').innerHTML = data.cancel_reasons.map(r=>`
+    <tr><td>${r.ly_do}</td><td class="right">${r.so_don}</td><td class="right">${fmtPct(r.so_don/totalCancel*100)}</td></tr>`).join('');
+
+  // Alerts: tìm ngày bất thường
+  const alerts = [];
+  const trend = data.trend;
+  const avgDT = trend.reduce((s,d)=>s+d.DT,0)/trend.length;
+  trend.forEach(d=>{
+    if (d.DT > avgDT*4) alerts.push({type:'good', text:`<strong>📈 ${d.Ngày}</strong>: DT bùng nổ ${fmt(d.DT)} (gấp ${(d.DT/avgDT).toFixed(1)}x trung bình) — khả năng có livestream/flash sale.`});
+    if (d.cancel_rate > 25 && d.orders_ok+d.orders_cancel>50) alerts.push({type:'bad', text:`<strong>⚠️ ${d.Ngày}</strong>: Tỷ lệ hủy ${d.cancel_rate.toFixed(1)}% — cần điều tra.`});
+    if (d.ads_cost===0 && d.DT>0) alerts.push({type:'warn', text:`<strong>${d.Ngày}</strong>: Không có chi phí ADS nhưng vẫn có ${fmt(d.DT)} doanh thu — tài khoản ADS có thể đã hết tiền/dừng.`});
+    if (d.margin<10 && d.DT>10e6) alerts.push({type:'bad', text:`<strong>${d.Ngày}</strong>: Biên LN chỉ ${d.margin.toFixed(1)}% với DT ${fmt(d.DT)} — đáng kiểm tra cơ cấu sản phẩm.`});
+  });
+  document.getElementById('trend-alerts').innerHTML = alerts.length ? alerts.map(a=>`<div class="insight ${a.type}">${a.text}</div>`).join('') : '<div class="insight">Không có cảnh báo bất thường.</div>';
+}
+
+// ====== RENDER DECISION ======
+function renderDecision(){
+  const k = data.kpi, p = data.phi;
+  const ads = data.ads_campaigns;
+  const totalAdsCost = ads.reduce((s,a)=>s+a['Chi phí'],0);
+  const totalAdsRev = ads.reduce((s,a)=>s+a['Doanh số'],0);
+
+  const decisions = [];
+  const margin_real_h = k.LN_sau_GV/k.DT_ok*100;
+
+  // ADS - đây là vấn đề lớn nhất
+  decisions.push({
+    p:'p1', title:'🚨 Chi phí ADS chiếm 17.79% DT — cao nhất trong 3 shop, đang ăn mòn lợi nhuận',
+    body:`Chi <strong>${fmt(p.ads)}</strong> cho ADS, mang về <strong>${fmt(totalAdsRev)}</strong> doanh số (ROAS 5.51x, ACOS 18.1%). 
+    Tỷ lệ ADS/DT = <strong>17.79%</strong> — cao gấp 2.6x Actidem (6.77%) và cao hơn BE GLOW (14%).
+    <br><br>
+    <strong>Phân tích từng chiến dịch:</strong>
+    <ul style="margin:6px 0;padding-left:20px">
+      <li><strong>"Gel Actidem" [2]</strong> (68% budget = 70.9tr): ROAS chỉ <strong>4.50x</strong> — đang ăn nhiều ngân sách nhất nhưng hiệu quả thấp nhất. <span class="pill bad">Tối ưu gấp</span></li>
+      <li><strong>"KCN Make Prem" [3]</strong> (20% budget): ROAS <strong>8.10x</strong> — hiệu quả nhất. <span class="pill good">Scale 50%</span></li>
+      <li><strong>"Chiến Dịch Nhóm 22/04"</strong> (12% budget): ROAS <strong>7.07x</strong> — tốt. <span class="pill good">Scale 30%</span></li>
+    </ul>
+    <strong>Hành động ngay:</strong>
+    <ol style="margin:6px 0;padding-left:20px">
+      <li>Cắt 30-40% budget của chiến dịch Gel Actidem [2] — chuyển sang Make Prem [3] và Chiến Dịch Nhóm.</li>
+      <li>Kiểm tra creative & landing page của Gel Actidem [2]: tại sao cùng SKU lãi 70% mà ROAS chỉ 4.5x?</li>
+      <li>Test giảm giá thầu chiến dịch Gel Actidem 20% xem ROAS có cải thiện không.</li>
+    </ol>
+    <strong>Tác động ước tính:</strong> Tái phân bổ ADS → tăng ROAS toàn shop từ 5.51x lên 6.5-7x, tiết kiệm ~15-20 triệu/tháng.`
+  });
+
+  // SKU thiếu giá vốn (còn ít sau update)
+  decisions.push({
+    p:'p3', title:'📝 Còn 2 SKU nhỏ chưa có giá vốn trong master',
+    body:`Sau khi cập nhật Derma Gel 40g và set Mặt nạ Actidem là HÀNG TẶNG, còn 2 SKU đơn HT chưa có giá vốn:
+    <ul style="margin:6px 0;padding-left:20px">
+      <li><code>261755</code> (Gel Rửa Mặt Actidem): 29 đơn, DT ~4.65tr — chưa có trong master.</li>
+      <li><code>8809418755425</code> (Toner Angel's Liquid Tranexamic): 3 đơn, DT ~1.3tr.</li>
+    </ul>
+    Khối lượng nhỏ, tác động đến LN dưới 3 triệu. Nhưng để báo cáo chính xác, đề nghị kế toán bổ sung trong tháng tới.
+    <br><br>
+    <em>Lưu ý phụ:</em> Sheet Giá vốn vẫn ghi PHÂN LOẠI của <code>8938546064168</code> là "Mặt nạ Actidem" thay vì "HÀNG TẶNG". Để báo cáo nhất quán dài hạn, chị nên sửa lại trong sheet master để các tháng sau không cần override thủ công.`
+  });
+
+  // Mặt nạ Actidem - hàng tặng kèm
+  decisions.push({
+    p:'p3', title:'🎁 Mặt nạ Actidem B5 — Quà tặng kèm để tăng AOV & loyalty',
+    body:`SKU <code>8938546064168</code> (Mặt nạ Actidem B5) đã được set là <strong>HÀNG TẶNG</strong>: 200 sản phẩm tặng kèm trong 200 đơn (1 mặt nạ/đơn).
+    <br><br>
+    Đây là chiến lược marketing hợp lý:
+    <ul style="margin:6px 0;padding-left:20px">
+      <li>Tỷ lệ tặng: 200 đơn tặng / ${k.n_orders_ok.toLocaleString('vi-VN')} đơn HT = ${(200/k.n_orders_ok*100).toFixed(1)}% (chỉ 1 trong 14 đơn được tặng) — không quá rộng rãi.</li>
+      <li>Mặt nạ B5 phục hồi da phù hợp tệp khách hàng "da mụn" của shop → có khả năng cross-sell sang dòng skincare phục hồi.</li>
+    </ul>
+    <strong>Đề xuất tối ưu:</strong>
+    <ol style="margin:6px 0;padding-left:20px">
+      <li>Tracking riêng: 200 khách nhận mặt nạ có quay lại mua skincare cao cấp hơn trong 30/60/90 ngày không?</li>
+      <li>Nếu LTV nhóm này cao hơn → tăng số đơn tặng (target đơn ngưỡng AOV cao hơn).</li>
+      <li>Cập nhật sheet GV: đổi PHÂN LOẠI sang "HÀNG TẶNG" + thêm giá vốn (~10-15k/sp) để track chi phí marketing chính xác.</li>
+    </ol>`
+  });
+
+  // Tỷ lệ hủy
+  decisions.push({
+    p:'p1', title:'🚨 Tỷ lệ hủy đơn 18.32% — Mất 119 triệu doanh thu/tháng',
+    body:`Trong ${k.n_orders_total.toLocaleString('vi-VN')} đơn có <strong>${k.n_orders_cancel.toLocaleString('vi-VN')} đơn hủy</strong> (${k.cancel_rate.toFixed(2)}%), mất <strong>${fmt(k.DT_cancel)}</strong> doanh thu (${(k.DT_cancel/k.DT*100).toFixed(1)}% tổng DT).
+    Tỷ lệ này cao hơn benchmark mỹ phẩm (<10%) đáng kể.
+    <br><br>
+    TOP lý do hủy: <em>"Lý do khác"</em> (119, 19.9%), <em>"Thay đổi đơn hàng"</em> (107, 17.9%), <em>"Đổi địa chỉ giao hàng"</em> (123 = 71+52, gộp), <em>"Đổi voucher"</em> (56, 9.4%), <em>"Giao hàng thất bại auto cancel"</em> (52, 8.7%).
+    <br><br>
+    <strong>Hành động:</strong>
+    <ol style="margin:6px 0;padding-left:20px">
+      <li><strong>Vấn đề địa chỉ chiếm ~20% hủy</strong>: thêm tooltip xác nhận địa chỉ trước khi submit + CS gọi xác nhận đơn lớn.</li>
+      <li><strong>Voucher hủy 56 đơn</strong>: hiển thị "best voucher applied" để khách không phải hủy đổi lại.</li>
+      <li><strong>Giao hàng thất bại 52 đơn</strong>: review ĐVVC, có thể đổi từ Shopee Express sang J&T/GHN cho khu vực nhiều thất bại.</li>
+    </ol>
+    <strong>Tác động ước tính:</strong> Giảm hủy về 12% → tăng tiền thực thu thêm <strong>~37 triệu/tháng</strong>, biên LN thực tăng từ ${margin_real_h.toFixed(1)}% lên ~${(margin_real_h+2).toFixed(1)}%.`
+  });
+
+  // Phụ thuộc danh mục KCN Make Prem
+  decisions.push({
+    p:'p2', title:'📊 KCN Make Prem chiếm 28.3% DT nhưng biên LN gộp chỉ 22.9%',
+    body:`<strong>KCN Make Prem</strong> mang về <strong>132.6 triệu</strong> doanh thu (28.3% DT thực thu) nhưng biên LN gộp chỉ <strong>22.9%</strong> — thấp hơn nhiều so với:
+    <ul style="margin:6px 0;padding-left:20px">
+      <li>Gel mụn Actidem: 35.6% DT, biên <strong>70.9%</strong></li>
+      <li>Gel rửa mặt Actidem: 4.5% DT, biên <strong>72.6%</strong></li>
+    </ul>
+    Nguyên nhân: KCN Make Prem là hàng nhập (giá vốn cao 198-270k), trong khi Actidem là hàng tự sản xuất.
+    <br><br>
+    Đây không phải vấn đề cần "khắc phục" mà là <strong>tradeoff chiến lược</strong>: KCN là sản phẩm phụ trợ giúp tăng AOV và cross-sell. Tuy nhiên:
+    <ol style="margin:6px 0;padding-left:20px">
+      <li>Đàm phán giá nhập với supplier Make Prem nếu volume đã đủ lớn (200+ sp/tháng).</li>
+      <li>Theo dõi tỷ lệ đơn có cả Gel Actidem + KCN Make Prem — nếu cao thì KCN đang phục vụ vai trò bundling tốt.</li>
+      <li>Đánh giá dòng KCN Dermablock (cùng SKU KCN nhưng giá vốn 108k, có thể biên tốt hơn).</li>
+    </ol>`
+  });
+
+  // Top SKU dependency
+  decisions.push({
+    p:'p2', title:'🎯 Top 3 SKU chiếm 46% doanh thu — rủi ro tập trung trung bình',
+    body:`<strong>NSebum Kiềm Dầu 50ml</strong> (KCN Make Prem) dẫn đầu DT (18.9%) nhưng biên chỉ 21.9%, đứng dưới là <strong>Derma Extra 18g</strong> (17.0%, biên 70%) và <strong>Derma Gel 18g</strong> (10.0%, biên 71.5%).
+    <br>
+    Top 3 chiếm 45.9% DT — mức tập trung trung bình, chưa quá rủi ro (BE GLOW ~49%, Actidem ~21%).
+    <br><br>
+    <strong>Đề xuất:</strong>
+    <ol style="margin:6px 0;padding-left:20px">
+      <li>NSebum Kiềm Dầu đang là "traffic driver" — duy trì hiển thị tốt trên Shopee.</li>
+      <li>Đẩy thêm Extra Gel 10g (qty 512, biên 72%) — đây là SKU lãi cao nhưng chưa có chiến dịch ads riêng.</li>
+      <li>Đảm bảo tồn kho top 3 SKU đủ cho 1.5-2 tháng.</li>
+    </ol>`
+  });
+
+  // Phí Aff
+  decisions.push({
+    p:'p3', title:'🔗 Phí Aff 13.93 triệu = 2.37% DT — kiểm soát rất tốt',
+    body:`Phí Affiliate <strong>${fmt(p.aff)}</strong> (${p.ty_le_aff_dt.toFixed(2)}% DT all đơn / ${(p.aff/k.DT_ok*100).toFixed(2)}% DT thực thu). 
+    Thấp hơn nhiều so với Actidem (6.70%) và BE GLOW (4.54%) — chứng tỏ shop Từ Hảo đang phụ thuộc ít vào kênh Aff.
+    <br><br>
+    Đây có thể là cơ hội: nếu Aff hiệu quả, có thể tăng cường kênh này để giảm phụ thuộc vào ADS đang chi 17.79% DT.
+    <br><br>
+    <strong>Đề xuất test trong tháng 5:</strong>
+    <ol style="margin:6px 0;padding-left:20px">
+      <li>Tăng mức hoa hồng Aff lên 5-7% (hiện đang quá thấp nên có thể không thu hút creator).</li>
+      <li>Đo lường: 1đ chi Aff tạo ra bao nhiêu DT? So với 1đ ADS (5.51x)?</li>
+      <li>Nếu Aff ROI tốt hơn ADS → chuyển dần budget từ ADS sang Aff.</li>
+    </ol>`
+  });
+
+  // Dự phóng
+  const margin_real_dec = k.LN_sau_GV/k.DT_ok*100;
+  decisions.push({
+    p:'p3', title:'📊 Dự phóng tháng 5',
+    body:`DT trung bình ngày (all đơn) = ${fmt(k.DT/29)}. Dự phóng đủ 30 ngày = <strong>${fmt(k.DT/29*30)}</strong> (all đơn) tương đương <strong>${fmt(k.DT_ok/29*30)}</strong> DT thực thu.
+    <br>
+    Hiện tại biên LN = ${k.margin.toFixed(1)}% / DT all đơn (${margin_real_dec.toFixed(1)}% / DT thực thu). LN sau GV = <strong>${fmt(k.LN_sau_GV)}</strong>.
+    <br><br>
+    Nếu áp dụng các cải thiện (tái phân bổ ADS từ Gel Actidem sang Make Prem & Chiến Dịch Nhóm, giảm hủy về 12%):
+    <ul style="margin:6px 0;padding-left:20px">
+      <li>Target tháng 5: <strong>DT all đơn ~700-750 triệu</strong> (+20%); DT thực thu ~600-640 triệu.</li>
+      <li>Target biên LN: <strong>${(k.margin+3).toFixed(1)}-${(k.margin+5).toFixed(1)}%</strong> trên DT all đơn (cải thiện chủ yếu từ tối ưu ADS).</li>
+      <li>Target LN sau GV: <strong>${fmt(k.LN_sau_GV*1.3)} - ${fmt(k.LN_sau_GV*1.5)}</strong>.</li>
+    </ul>`
+  });
+
+  document.getElementById('decision-cards').innerHTML = decisions.map(d=>`
+    <div class="decision-card">
+      <div class="priority ${d.p}">${d.p==='p1'?'Ưu tiên cao':d.p==='p2'?'Trung bình':'Tham khảo'}</div>
+      <h4>${d.title}</h4>
+      <div class="body">${d.body}</div>
+    </div>`).join('');
+}
+
+// ====== Init ======
+renderOverview();
+renderCost();
+renderSku();
+renderCogs();
+renderProfit();
+renderAds();
+renderTrend();
+renderDecision();
+</script>
+</body>
+</html>
